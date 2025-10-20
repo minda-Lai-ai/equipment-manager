@@ -1,5 +1,24 @@
 import streamlit as st
+import pyrebase
 
+firebase_config = st.secrets["firebase_adminsdk"]
+firebase = pyrebase.initialize_app(firebase_config)
+auth = firebase.auth()
+
+st.title("🔐 使用者登入")
+
+email = st.text_input("Email")
+password = st.text_input("密碼", type="password")
+
+if st.button("登入"):
+    try:
+        user = auth.sign_in_with_email_and_password(email, password)
+        st.session_state["user"] = user
+        st.success("✅ 登入成功")
+        st.switch_page("main_dashboard.py")
+    except:
+        st.error("❌ 登入失敗，請檢查帳號密碼")
+        
 st.set_page_config(page_title="設備管理主控面板", layout="wide")
 st.title("🧭 設備管理主控面板")
 
