@@ -22,6 +22,10 @@ if st.button("登入"):
 st.set_page_config(page_title="設備管理主控面板", layout="wide")
 st.title("🧭 設備管理主控面板")
 
+if "user" not in st.session_state:
+    st.warning("⚠️ 請先登入才能使用系統")
+    st.stop()
+
 st.markdown("請選擇下列功能進入各模組頁面。")
 st.markdown("---")
 
