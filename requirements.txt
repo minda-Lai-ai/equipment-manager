@@ -1,4 +1,4 @@
 streamlit
 pandas
 Pillow
-pyrebase4
+firebase-admin
