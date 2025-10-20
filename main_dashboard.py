@@ -5,7 +5,9 @@ st.set_page_config(page_title="🧭 設備管理主控面板", layout="wide")
 
 # 🔐 登入檢查
 if "user" not in st.session_state:
-    st.switch_page("🔐 使用者登入")
+    st.warning("⚠️ 請先登入才能使用系統")
+    st.page_link("pages/login.py", label="🔐 前往登入頁面", icon="🔑")
+    st.stop()
 
 # 🔧 Firestore 連線（如需）
 db = firestore.client()
@@ -16,16 +18,6 @@ st.sidebar.success(f"👤 登入者：{user['name']}（{user['email']}）")
 
 # 🧭 主控面板內容
 st.title("🧭 設備管理主控面板")
-st.markdown("請選擇下列功能進入各模組頁面。")
-# ...（你的 page_link 模組選單）
-        
-st.set_page_config(page_title="設備管理主控面板", layout="wide")
-st.title("🧭 設備管理主控面板")
-
-if "user" not in st.session_state:
-    st.warning("⚠️ 請先登入才能使用系統")
-    st.stop()
-
 st.markdown("請選擇下列功能進入各模組頁面。")
 st.markdown("---")
 
