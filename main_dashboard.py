@@ -5,7 +5,9 @@ st.set_page_config(page_title="🧭 設備管理主控面板", layout="wide")
 
 # 🔐 登入檢查
 if "user" not in st.session_state:
-    st.switch_page("pages/login.py")
+    st.warning("⚠️ 請先登入才能使用系統")
+    st.page_link("pages/login.py", label="🔐 前往登入頁面", icon="🔑")
+    st.stop()
 
 # 🔧 Firestore 連線（如需）
 db = firestore.client()
