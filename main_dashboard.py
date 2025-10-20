@@ -1,23 +1,24 @@
 import streamlit as st
-import pyrebase
+from firebase_admin import firestore
 
-firebase_config = st.secrets["firebase_adminsdk"]
-firebase = pyrebase.initialize_app(firebase_config)
-auth = firebase.auth()
+st.set_page_config(page_title="🧭 設備管理主控面板", layout="wide")
 
-st.title("🔐 使用者登入")
+# 🔐 登入檢查
+if "user" not in st.session_state:
+    st.warning("⚠️ 請先登入才能使用系統")
+    st.stop()
 
-email = st.text_input("Email")
-password = st.text_input("密碼", type="password")
+# 🔧 Firestore 連線（如需）
+db = firestore.client()
 
-if st.button("登入"):
-    try:
-        user = auth.sign_in_with_email_and_password(email, password)
-        st.session_state["user"] = user
-        st.success("✅ 登入成功")
-        st.switch_page("main_dashboard.py")
-    except:
-        st.error("❌ 登入失敗，請檢查帳號密碼")
+# 👤 顯示登入者資訊
+user = st.session_state["user"]
+st.sidebar.success(f"👤 登入者：{user['name']}（{user['email']}）")
+
+# 🧭 主控面板內容
+st.title("🧭 設備管理主控面板")
+st.markdown("請選擇下列功能進入各模組頁面。")
+# ...（你的 page_link 模組選單）
         
 st.set_page_config(page_title="設備管理主控面板", layout="wide")
 st.title("🧭 設備管理主控面板")
