@@ -27,3 +27,4 @@ def get_firestore():
             st.stop()
             
     return firestore.client(app)
+
