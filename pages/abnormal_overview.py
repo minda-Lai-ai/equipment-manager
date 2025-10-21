@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import os
+from firebase_init import get_firestore
+db = get_firestore()
 from modules.export_tools import export_abnormal_report
 
 st.set_page_config(page_title="📋 異常紀錄總覽", layout="wide")
