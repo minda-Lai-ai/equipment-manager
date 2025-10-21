@@ -70,33 +70,33 @@ footer {visibility: hidden;}
 # --- CSS 結束 ---
 
 # 🔐 登入檢查 (如果沒有 'user' 狀態，則停止並導向登入頁面)
-if "user" not in st.session_state:
-    st.warning("⚠️ 請先登入才能使用系統")
+＃if "user" not in st.session_state:
+＃    st.warning("⚠️ 請先登入才能使用系統")
     # ***修正 1: 使用 page_link 導向 Page Title***
     # 假設 login.py 的 page_title 是 "🔐 使用者登入"
-    st.page_link("🔐 使用者登入", label="🔐 前往登入頁面", icon="🔑")
-    st.stop()
+＃    st.page_link("🔐 使用者登入", label="🔐 前往登入頁面", icon="🔑")
+＃    st.stop()
 
 # 呼叫快取過的函式
-try:
-    db = get_firestore_client()  
-except Exception as e:
-    st.error(f"❌ 無法連線到 Firestore。請檢查金鑰配置。錯誤: {e}")
-    st.stop()
+＃try:
+＃    db = get_firestore_client()  
+＃except Exception as e:
+＃    st.error(f"❌ 無法連線到 Firestore。請檢查金鑰配置。錯誤: {e}")
+＃    st.stop()
 
 # 👤 顯示登入者資訊 (在側邊欄)
-user = st.session_state["user"]
-st.sidebar.success(f"👤 登入者：{user['name']}（{user['email']}）")
+＃user = st.session_state["user"]
+＃st.sidebar.success(f"👤 登入者：{user['name']}（{user['email']}）")
 
 # 🚪 登出按鈕 (在側邊欄)
-def logout():
-    st.session_state.clear()
+＃def logout():
+＃    st.session_state.clear()
     # ***修正 2: 使用 switch_page 導向 Page Title***
     # 確保登出後導向登入頁面，使用 page_title 確保路徑正確
-    st.switch_page("🔐 使用者登入") 
+＃    st.switch_page("🔐 使用者登入") 
 
-if st.sidebar.button("🚪 登出", use_container_width=True):
-    logout()
+＃if st.sidebar.button("🚪 登出", use_container_width=True):
+＃    logout()
 
 # --- 主控面板內容 (其餘不變) ---
 st.markdown('<h1 class="main-title">🧭 設備管理主控面板</h1>', unsafe_allow_html=True)
