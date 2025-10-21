@@ -4,7 +4,7 @@ from firebase_init import get_firestore_client
 st.set_page_config(
     page_title="🧭 設備管理主控面板", 
     layout="wide",
-    initial_sidebar_state="expanded" # 預設展開側邊欄
+    initial_sidebar_state="expanded"
 )
 
 # --- CSS 美化 ---
@@ -72,6 +72,7 @@ footer {visibility: hidden;}
 # 🔐 登入檢查 (如果沒有 'user' 狀態，則停止並導向登入頁面)
 if "user" not in st.session_state:
     st.warning("⚠️ 請先登入才能使用系統")
+    # 這裡使用檔案名稱 'login.py'，假設它在跟目錄或被 Streamlit 識別為頁面
     st.page_link("login.py", label="🔐 前往登入頁面", icon="🔑")
     st.stop()
 
@@ -90,6 +91,7 @@ st.sidebar.success(f"👤 登入者：{user['name']}（{user['email']}）")
 def logout():
     st.session_state.clear()
     # 確保登出後導向登入頁面
+    # 我們使用 st.switch_page 並指明檔案名稱
     st.switch_page("login.py") 
 
 if st.sidebar.button("🚪 登出", use_container_width=True):
@@ -107,10 +109,12 @@ col_core1, col_core2 = st.columns(2)
 
 with col_core1:
     st.markdown('<p style="font-size:1.2em; font-weight:bold; color:#1565c0;">🛠️ 設備請購/維修系統</p>', unsafe_allow_html=True)
+    # 假設這個檔案在 pages 資料夾
     st.page_link("pages/equipment_system.py", label="📋 設備請購維修單", icon="📋", use_container_width=True)
 
 with col_core2:
     st.markdown('<p style="font-size:1.2em; font-weight:bold; color:#1565c0;">🧾 檢修與保養履歷</p>', unsafe_allow_html=True)
+    # 假設這個檔案在 pages 資料夾
     st.page_link("pages/maintenance_log.py", label="🧾 設備檢修保養履歷", icon="🧾", use_container_width=True)
 
 st.markdown('</div>', unsafe_allow_html=True)
@@ -127,7 +131,7 @@ with col_data1:
     st.markdown('<p style="font-weight:bold; color:#2e7d32;">🆕 新增資料</p>', unsafe_allow_html=True)
     st.page_link("pages/new_equipment.py", label="🆕 新增設備", icon="🛠️", use_container_width=True)
     st.page_link("pages/add_event.py", label="🆕 新增保養事件", icon="📅", use_container_width=True)
-    st.page_link("pages/save_data.py", label="💾 資料儲存模組", icon="💾", use_container_width=True) # 假設這是資料儲存的通用模組
+    st.page_link("pages/save_data.py", label="💾 資料儲存模組", icon="💾", use_container_width=True) 
 
 with col_data2:
     st.markdown('<p style="font-weight:bold; color:#2e7d32;">🔍 總覽與瀏覽</p>', unsafe_allow_html=True)
