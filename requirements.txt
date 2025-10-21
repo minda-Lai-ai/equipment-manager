@@ -2,3 +2,4 @@ streamlit
 pandas
 Pillow
 firebase-admin
+fpdf
