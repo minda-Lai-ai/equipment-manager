@@ -1,10 +1,13 @@
+import firebase_admin
+from firebase_admin import credentials, firestore
 import streamlit as st
-from firebase_init import get_firestore
 
-st.set_page_config(page_title="🔐 使用者登入", layout="centered")
-st.title("🔐 使用者登入")
+# ✅ 安全初始化 Firebase Admin SDK（只執行一次）
+if not firebase_admin._apps:
+    cred = credentials.Certificate(eval(st.secrets["firebase_adminsdk"]))
+    firebase_admin.initialize_app(cred)
 
-db = get_firestore()
+db = firestore.client()
 
 email = st.text_input("Email")
 password = st.text_input("密碼", type="password")
