@@ -10,11 +10,11 @@ st.set_page_config(page_title="🧭 設備管理主控面板", layout="wide")
 #     st.stop()
 
 # 🔧 Firestore 連線（如需）
-db = firestore.client()
+# db = firestore.client()
 
 # 👤 顯示登入者資訊
-user = st.session_state["user"]
-st.sidebar.success(f"👤 登入者：{user['name']}（{user['email']}）")
+# user = st.session_state["user"]
+# st.sidebar.success(f"👤 登入者：{user['name']}（{user['email']}）")
 
 # 🧭 主控面板內容
 st.title("🧭 設備管理主控面板")
