@@ -1,3 +1,6 @@
+from auth_check import require_login
+require_login()
+
 import streamlit as st
 import pandas as pd
 
