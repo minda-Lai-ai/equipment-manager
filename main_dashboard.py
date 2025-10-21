@@ -1,5 +1,6 @@
 import streamlit as st
-from firebase_admin import firestore
+from firebase_init import get_firestore
+db = get_firestore()
 
 st.set_page_config(page_title="🧭 設備管理主控面板", layout="wide")
 
