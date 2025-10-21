@@ -72,8 +72,9 @@ footer {visibility: hidden;}
 # 🔐 登入檢查 (如果沒有 'user' 狀態，則停止並導向登入頁面)
 if "user" not in st.session_state:
     st.warning("⚠️ 請先登入才能使用系統")
-    # 這裡使用檔案名稱 'login.py'，假設它在跟目錄或被 Streamlit 識別為頁面
-    st.page_link("login.py", label="🔐 前往登入頁面", icon="🔑")
+    # ***修正 1: 使用 page_link 導向 Page Title***
+    # 假設 login.py 的 page_title 是 "🔐 使用者登入"
+    st.page_link("🔐 使用者登入", label="🔐 前往登入頁面", icon="🔑")
     st.stop()
 
 # 呼叫快取過的函式
@@ -90,14 +91,14 @@ st.sidebar.success(f"👤 登入者：{user['name']}（{user['email']}）")
 # 🚪 登出按鈕 (在側邊欄)
 def logout():
     st.session_state.clear()
-    # 確保登出後導向登入頁面
-    # 我們使用 st.switch_page 並指明檔案名稱
-    st.switch_page("login.py") 
+    # ***修正 2: 使用 switch_page 導向 Page Title***
+    # 確保登出後導向登入頁面，使用 page_title 確保路徑正確
+    st.switch_page("🔐 使用者登入") 
 
 if st.sidebar.button("🚪 登出", use_container_width=True):
     logout()
 
-# --- 主控面板內容 ---
+# --- 主控面板內容 (其餘不變) ---
 st.markdown('<h1 class="main-title">🧭 設備管理主控面板</h1>', unsafe_allow_html=True)
 st.info("👋 歡迎回來！請透過下方模組進入系統功能。")
 
@@ -168,6 +169,4 @@ with col_tool2:
 
 
 st.markdown('</div>', unsafe_allow_html=True)
-st.markdown("---")
-
 st.caption("© 海運組油氣處理課 - 設備管理系統")
