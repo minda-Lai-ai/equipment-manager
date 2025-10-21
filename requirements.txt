@@ -3,4 +3,3 @@ pandas
 Pillow
 firebase-admin
 fpdf
-json
