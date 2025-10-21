@@ -130,7 +130,8 @@ if st.button("📁 匯出 PDF 與圖片"):
 
     with st.expander("📄 PDF 檔案"):
         st.markdown(f"📎 檔名：`{os.path.basename(pdf_path)}`")
-        st.markdown(f"📥 [下載 PDF]({pdf_path})")
+    with open(pdf_path, "rb") as f:
+        st.download_button("📥 下載 PDF", f, file_name=os.path.basename(pdf_path))
         st.code(pdf_path, language="bash")
 
     with st.expander("🖼️ 圖片檔案"):
