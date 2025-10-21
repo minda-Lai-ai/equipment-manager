@@ -1,6 +1,4 @@
-import streamlit as st
 from firebase_init import get_firestore
-
 db = get_firestore()
 
 # ✅ 安全初始化 Firebase Admin SDK（只執行一次）
