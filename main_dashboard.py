@@ -28,6 +28,7 @@ def get_firestore():
 # 🚪 登出按鈕
 if st.sidebar.button("🚪 登出"):
     st.session_state.clear()
+    st.page_link("pages/firebase_test.py", label="🧪 Firebase 測試頁面", icon="🧬")
     st.switch_page("pages/login.py")  # 或改成 st.page_link(...) 也可以
 
 # 🧭 主控面板內容
