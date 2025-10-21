@@ -15,10 +15,10 @@ def get_firestore_client():
     獲取 Firestore 客戶端實例。
     包含初始化邏輯和錯誤診斷，確保連線正常。
     """
+    db = None
     try:
         # 嘗試從 Streamlit secrets 載入 JSON
         firebase_config_str = st.secrets["firebase_adminsdk"]
-        # 使用 json.loads 替代 eval，更安全穩定
         cred_dict = json.loads(firebase_config_str)
         
         # 1. 初始化 Firebase App
@@ -38,10 +38,9 @@ def get_firestore_client():
         
         # 使用 try-except 區塊來執行測試讀取
         try:
-            # 讀取不存在文件
-            test_doc_ref.get(timeout=5) # 設定 5 秒超時
+            # 讀取不存在文件，並將超時時間延長到 15 秒
+            test_doc_ref.get(timeout=15)
         except PermissionDenied:
-            # 如果連線成功，但被規則拒絕 (這是最常見的卡住原因)
             st.error("❌ Firebase 連線成功，但 **Firestore 安全規則拒絕了操作**。請檢查您的 Firestore Rules，確保 Admin SDK 有讀寫權限。")
             raise  # 拋出錯誤，阻止應用程式繼續運行
         except InternalServerError:
@@ -51,14 +50,13 @@ def get_firestore_client():
             st.error("❌ Firebase 連線失敗：**網路超時 (Timeout)**。請檢查部署環境的網路連線是否允許對 Firebase 的出站連線。")
             raise
         except Exception as e:
-            # 捕捉所有其他的 API 錯誤，例如網路問題
             error_type = type(e).__name__
-            # 檢查是否為 NotFound 錯誤 (這才是正常的測試結果)
+            # NotFoundError 是正常的連線測試結果，表示讀取成功但文件不存在。
             if error_type not in ["NotFound", "NotFoundError"]: 
                 st.error(f"❌ Firebase 連線或操作失敗。錯誤類型: {error_type}，詳情: {e}")
                 raise
 
-        # 測試通過後 (拋出 NotFound 錯誤是正常的，我們捕捉它並忽略)，返回客戶端
+        # 測試通過後 (捕捉到 NotFound 錯誤是正常的)，返回客戶端
         return db
 
     except json.JSONDecodeError:
@@ -66,5 +64,9 @@ def get_firestore_client():
         raise
     except Exception as e:
         # 捕捉所有 Admin SDK 初始化前的錯誤
+        # 如果 db 已經被初始化但後面失敗，則只返回 db
+        if db:
+            return db
+
         st.error(f"❌ Firebase 連線或初始化失敗。請檢查金鑰內容。錯誤：{e}")
         raise
