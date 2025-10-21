@@ -28,6 +28,7 @@ def get_firestore_client():
             st.toast("✅ Firebase Admin SDK 初始化成功 (已快取)", icon="🔑")
         except KeyError:
             st.error("❌ 錯誤：請在 .streamlit/secrets.toml 中設定 'firebase_adminsdk' 金鑰。")
+            # 拋出錯誤讓 Streamlit 停止，防止應用程式卡住
             raise
         except json.JSONDecodeError:
              st.error("❌ 錯誤：`firebase_adminsdk` 的值不是有效的 JSON 格式字串。")
