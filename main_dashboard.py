@@ -9,8 +9,7 @@ if "user" not in st.session_state:
     st.page_link("pages/login.py", label="🔐 前往登入頁面", icon="🔑")
     st.stop()
 
-from firebase_admin import firestore
-db = firestore.client()
+db = get_firestore()
 
 # 👤 顯示登入者資訊
 user = st.session_state["user"]
