@@ -12,19 +12,25 @@ def get_firestore():
     從 st.secrets['firebase_adminsdk'] 載入憑證。
     """
     try:
+        # 檢查是否已經初始化
         app = firebase_admin.get_app(APP_NAME)
     except ValueError:
+        # 尚未初始化，進行初始化
         try:
-            # 嘗試解析 JSON 格式的服務帳戶憑證
+            # 嘗試解析 JSON 格式的服務帳戶憑證 (使用 json.loads 取代 eval)
+            # 確保 st.secrets["firebase_adminsdk"] 是一個有效的 JSON 字串
             secret_json = json.loads(st.secrets["firebase_adminsdk"])
             cred = credentials.Certificate(secret_json)
             app = firebase_admin.initialize_app(cred, name=APP_NAME)
+            # st.toast("✅ Firebase Admin SDK 初始化成功！") # 可選：顯示成功訊息
         except KeyError:
             st.error("❌ 錯誤：請在 .streamlit/secrets.toml 中設定 'firebase_adminsdk' 金鑰。")
             st.stop()
+        except json.JSONDecodeError:
+             st.error("❌ 錯誤：`firebase_adminsdk` 的值不是有效的 JSON 格式字串。請檢查格式。")
+             st.stop()
         except Exception as e:
-            st.error(f"❌ 錯誤：無法初始化 Firebase。請檢查 'firebase_adminsdk' 格式是否為有效的 JSON。錯誤詳情: {e}")
+            st.error(f"❌ 錯誤：無法初始化 Firebase。錯誤詳情: {e}")
             st.stop()
             
     return firestore.client(app)
-
