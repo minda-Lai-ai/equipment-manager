@@ -2,6 +2,8 @@ from modules.export_tools import export_abnormal_report
 import streamlit as st
 import pandas as pd
 import os
+from firebase_init import get_firestore
+db = get_firestore()
 from PIL import Image
 from datetime import datetime
 from fpdf import FPDF
