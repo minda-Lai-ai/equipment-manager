@@ -1,10 +1,13 @@
 # pages/login.py
+
 import streamlit as st
 import time
 from firebase_init import get_firestore_client
 import json
 import firebase_admin
-from google.cloud.firestore.exceptions import NotFound, PermissionDenied, GoogleAPICallError
+from firebase_admin import firestore
+# 關鍵修正：從 google.api_core 匯入異常，這在 Streamlit 環境中更穩定
+from google.api_core.exceptions import PermissionDenied, GoogleAPICallError, NotFound, InternalServerError
 
 # 頁面配置
 st.set_page_config(page_title="🔐 使用者登入", layout="centered")
@@ -14,7 +17,6 @@ st.title("🔐 使用者登入")
 try:
     db = get_firestore_client()
 except Exception:
-    # 錯誤訊息會在 firebase_init.py 中被顯示，這裡只需停止運行
     st.stop()
 
 
@@ -58,11 +60,13 @@ if st.button("登入", use_container_width=True):
             else:
                 st.error("❌ 登入失敗：此帳號在 Firestore 的 users collection 中不存在。")
         
-        # 捕捉 Firestore 操作特定的錯誤
+        # 捕捉 Firestore 操作特定的錯誤 (使用更通用的 API 異常)
         except PermissionDenied:
-            st.error("❌ 登入失敗：Firestore 拒絕了操作。請檢查您的 **Firestore 安全規則**，確保 Admin SDK 有權限讀取 'users' collection。")
+            st.error("❌ 登入失敗：Firestore 拒絕了操作。請檢查您的 **Firestore 安全規則**。")
         except GoogleAPICallError as e:
-            st.error(f"❌ 網路連線或 API 呼叫錯誤。請檢查部署環境的網路狀態。錯誤詳情: {e}")
+            st.error(f"❌ 網路連線或 API 呼叫錯誤。請檢查部署環境的網路狀態或金鑰。錯誤詳情: {e}")
+        except InternalServerError:
+            st.error("❌ 登入失敗：Google 服務內部錯誤。請稍後再試。")
         except Exception as e:
             st.error(f"❌ 登入時發生未預期錯誤。錯誤類型: {type(e).__name__}，詳情: {e}")
 
@@ -100,5 +104,8 @@ with st.expander("🆕 註冊新帳號 (測試用)"):
                 st.error("❌ 註冊失敗：Firestore 拒絕了操作。請檢查您的 **Firestore 安全規則**。")
             except GoogleAPICallError as e:
                 st.error(f"❌ 網路連線或 API 呼叫錯誤。錯誤詳情: {e}")
+            except InternalServerError:
+                st.error("❌ 註冊失敗：Google 服務內部錯誤。請稍後再試。")
             except Exception as e:
                 st.error(f"❌ 註冊時發生未預期錯誤。錯誤類型: {type(e).__name__}，詳情: {e}")
+
