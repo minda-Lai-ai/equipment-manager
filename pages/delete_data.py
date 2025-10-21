@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+from firebase_init import get_firestore
+db = get_firestore()
 from modules.four_level_selector import four_level_selector
 from datetime import datetime
 
