@@ -1,5 +1,6 @@
 import streamlit as st
-from firebase_init import get_firestore_client 
+import time
+from firebase_init import get_firestore_client
 
 st.set_page_config(
     page_title="🧭 設備管理主控面板", 
@@ -50,55 +51,45 @@ footer {visibility: hidden;}
 }
 
 /* 調整 st.page_link 的樣式，讓它填滿容器並美觀 */
+/* 注意：這個樣式對 Streamlit 內建的 page_link 影響有限，主要影響容器 */
 .stPageLink {
-    background-color: #ffffff; /* 按鈕背景 */
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 10px 15px;
     margin-bottom: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    transition: background-color 0.2s, transform 0.2s;
 }
-
-.stPageLink:hover {
-    background-color: #f0f0f0;
-    transform: translateY(-2px);
-}
-
 </style>
 """, unsafe_allow_html=True)
 # --- CSS 結束 ---
 
 # 🔐 登入檢查 (如果沒有 'user' 狀態，則停止並導向登入頁面)
-＃if "user" not in st.session_state:
-＃    st.warning("⚠️ 請先登入才能使用系統")
-    # ***修正 1: 使用 page_link 導向 Page Title***
-    # 假設 login.py 的 page_title 是 "🔐 使用者登入"
-＃    st.page_link("🔐 使用者登入", label="🔐 前往登入頁面", icon="🔑")
-＃    st.stop()
+if "user" not in st.session_state:
+    st.warning("⚠️ 請先登入才能使用系統")
+    # ***修正路徑***：導向 pages/login.py
+    st.page_link("pages/login.py", label="🔐 前往登入頁面", icon="🔑")
+    st.stop()
 
 # 呼叫快取過的函式
-＃try:
-＃    db = get_firestore_client()  
-＃except Exception as e:
-＃    st.error(f"❌ 無法連線到 Firestore。請檢查金鑰配置。錯誤: {e}")
-＃    st.stop()
+try:
+    db = get_firestore_client()  
+except Exception as e:
+    st.error(f"❌ 無法連線到 Firestore。請檢查金鑰配置。錯誤: {e}")
+    st.stop()
 
 # 👤 顯示登入者資訊 (在側邊欄)
-＃user = st.session_state["user"]
-＃st.sidebar.success(f"👤 登入者：{user['name']}（{user['email']}）")
+user = st.session_state["user"]
+st.sidebar.success(f"👤 登入者：{user['name']}（{user['email']}）")
 
 # 🚪 登出按鈕 (在側邊欄)
-＃def logout():
-＃    st.session_state.clear()
-    # ***修正 2: 使用 switch_page 導向 Page Title***
-    # 確保登出後導向登入頁面，使用 page_title 確保路徑正確
-＃    st.switch_page("🔐 使用者登入") 
+def logout():
+    st.session_state.clear()
+    # ***修正路徑***：登出後導向 pages/login.py
+    st.switch_page("pages/login.py") 
 
-＃if st.sidebar.button("🚪 登出", use_container_width=True):
-＃    logout()
+if st.sidebar.button("🚪 登出", use_container_width=True):
+    # 增加一個短暫的提示，讓使用者知道正在登出
+    st.toast("正在登出...", icon='🚪')
+    time.sleep(0.5)
+    logout()
 
-# --- 主控面板內容 (其餘不變) ---
+# --- 主控面板內容 ---
 st.markdown('<h1 class="main-title">🧭 設備管理主控面板</h1>', unsafe_allow_html=True)
 st.info("👋 歡迎回來！請透過下方模組進入系統功能。")
 
@@ -110,12 +101,10 @@ col_core1, col_core2 = st.columns(2)
 
 with col_core1:
     st.markdown('<p style="font-size:1.2em; font-weight:bold; color:#1565c0;">🛠️ 設備請購/維修系統</p>', unsafe_allow_html=True)
-    # 假設這個檔案在 pages 資料夾
     st.page_link("pages/equipment_system.py", label="📋 設備請購維修單", icon="📋", use_container_width=True)
 
 with col_core2:
     st.markdown('<p style="font-size:1.2em; font-weight:bold; color:#1565c0;">🧾 檢修與保養履歷</p>', unsafe_allow_html=True)
-    # 假設這個檔案在 pages 資料夾
     st.page_link("pages/maintenance_log.py", label="🧾 設備檢修保養履歷", icon="🧾", use_container_width=True)
 
 st.markdown('</div>', unsafe_allow_html=True)
