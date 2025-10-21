@@ -1,11 +1,15 @@
 import streamlit as st
 from firebase_init import get_firestore
+# from firebase_admin import firestore, credentials # 由於 get_firestore 已匯入，此行非必要
+# import firebase_admin # 由於 get_firestore 已匯入，此行非必要
+
 
 st.set_page_config(page_title="🧭 設備管理主控面板", layout="wide")
 
 # 🔐 登入檢查
 if "user" not in st.session_state:
     st.warning("⚠️ 請先登入才能使用系統")
+    # 注意：這裡應該使用相對路徑，假設 login.py 放在 pages/ 目錄下
     st.page_link("pages/login.py", label="🔐 前往登入頁面", icon="🔑")
     st.stop()
 
@@ -15,21 +19,16 @@ db = get_firestore()  # ✅ 正確取得 Firestore 實例
 user = st.session_state["user"]
 st.sidebar.success(f"👤 登入者：{user['name']}（{user['email']}）")
 
-APP_NAME = "equipment_manager_app"
-
-def get_firestore():
-    try:
-        app = firebase_admin.get_app(APP_NAME)
-    except ValueError:
-        cred = credentials.Certificate(eval(st.secrets["firebase_adminsdk"]))
-        app = firebase_admin.initialize_app(cred, name=APP_NAME)
-    return firestore.client(app)
+# 以下重複的函式已移除，因為已從 firebase_init 匯入
+# APP_NAME = "equipment_manager_app"
+# def get_firestore(): ...
 
 # 🚪 登出按鈕
 if st.sidebar.button("🚪 登出"):
     st.session_state.clear()
-    st.page_link("pages/firebase_test.py", label="🧪 Firebase 測試頁面", icon="🧬")
-    st.switch_page("pages/login.py")  # 或改成 st.page_link(...) 也可以
+    # 由於沒有提供 firebase_test.py，我們只保留跳轉到登入頁面的功能
+    # st.page_link("pages/firebase_test.py", label="🧪 Firebase 測試頁面", icon="🧬")
+    st.switch_page("🔐 使用者登入") # 使用 page_title 而非檔案路徑，更穩定
 
 # 🧭 主控面板內容
 st.title("🧭 設備管理主控面板")
