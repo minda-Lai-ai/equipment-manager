@@ -1,6 +1,8 @@
 import streamlit as st
 from PIL import Image, ImageDraw, ImageFont
 import pandas as pd
+from firebase_init import get_firestore
+db = get_firestore()
 
 st.set_page_config(page_title="圖片儲存模組", layout="wide")
 st.title("🖼️ 圖片儲存模組")
