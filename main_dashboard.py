@@ -12,8 +12,14 @@ if "user" not in st.session_state:
 from firebase_admin import firestore
 db = firestore.client()
 
+# 👤 顯示登入者資訊
 user = st.session_state["user"]
 st.sidebar.success(f"👤 登入者：{user['name']}（{user['email']}）")
+
+# 🚪 登出按鈕
+if st.sidebar.button("🚪 登出"):
+    st.session_state.clear()
+    st.switch_page("pages/login.py")  # 或改成 st.page_link(...) 也可以
 
 # 🧭 主控面板內容
 st.title("🧭 設備管理主控面板")
