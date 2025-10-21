@@ -4,17 +4,16 @@ from firebase_admin import firestore
 st.set_page_config(page_title="🧭 設備管理主控面板", layout="wide")
 
 # 🔐 登入檢查
-# if "user" not in st.session_state:
-#     st.warning("⚠️ 請先登入才能使用系統")
-#     st.page_link("pages/login.py", label="🔐 前往登入頁面", icon="🔑")
-#     st.stop()
+if "user" not in st.session_state:
+    st.warning("⚠️ 請先登入才能使用系統")
+    st.page_link("pages/login.py", label="🔐 前往登入頁面", icon="🔑")
+    st.stop()
 
-# 🔧 Firestore 連線（如需）
-# db = firestore.client()
+from firebase_admin import firestore
+db = firestore.client()
 
-# 👤 顯示登入者資訊
-# user = st.session_state["user"]
-# st.sidebar.success(f"👤 登入者：{user['name']}（{user['email']}）")
+user = st.session_state["user"]
+st.sidebar.success(f"👤 登入者：{user['name']}（{user['email']}）")
 
 # 🧭 主控面板內容
 st.title("🧭 設備管理主控面板")
