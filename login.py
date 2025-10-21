@@ -2,7 +2,7 @@ import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-# ✅ 安全初始化 Firebase Admin SDK（只執行一次）
+# ✅ 初始化 Firebase（只執行一次）
 try:
     firebase_admin.get_app()
 except ValueError:
