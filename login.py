@@ -2,11 +2,12 @@ import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-# 初始化 Firebase Admin SDK
-if "firebase_initialized" not in st.session_state:
+# ✅ 安全初始化 Firebase Admin SDK（只執行一次）
+try:
+    firebase_admin.get_app()
+except ValueError:
     cred = credentials.Certificate(eval(st.secrets["firebase_adminsdk"]))
     firebase_admin.initialize_app(cred)
-    st.session_state["firebase_initialized"] = True
 
 db = firestore.client()
 
