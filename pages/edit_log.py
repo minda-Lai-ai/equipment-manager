@@ -1,7 +1,5 @@
 import streamlit as st
 import pandas as pd
-from firebase_init import get_firestore
-db = get_firestore()
 from datetime import datetime, timedelta
 
 st.set_page_config(page_title="🔧 修改紀錄", layout="wide")
