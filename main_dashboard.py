@@ -14,8 +14,12 @@ try:
         config = yaml.load(file, Loader=SafeLoader)
     
     # 🚨 檢查：如果配置檔案為空或缺少關鍵頂層鍵，則停止
-    if not isinstance(config, dict) or 'cookie' not in config or 'credentials' not in config:
-        st.error("⚠️ config.yaml 載入失敗或結構錯誤：缺少 'cookie' 或 'credentials' 區塊。請確認檔案內容。")
+    # 新增檢查：確保 'credentials' 區塊中包含 'usernames' 鍵
+    if (not isinstance(config, dict) or 
+        'cookie' not in config or 
+        'credentials' not in config or
+        'usernames' not in config['credentials']):
+        st.error("⚠️ config.yaml 載入結構錯誤：缺少 'cookie' 或 'credentials' 區塊，或 'credentials' 中缺少 'usernames' 鍵。請參考範例文件修正！")
         st.stop()
         
 except FileNotFoundError:
@@ -37,7 +41,7 @@ authenticator = stauth.Authenticate(
     cookie_config.get('expiry_days', 30)
 )
 
-# --- 4. 登入 UI 與狀態檢查 (以下程式碼保持不變) ---
+# --- 4. 登入 UI 與狀態檢查 ---
 # 在側邊欄顯示登入表單
 st.sidebar.title("🔐 使用者登入")
 name, authentication_status, username = authenticator.login(location='sidebar')
@@ -139,4 +143,3 @@ elif st.session_state["authentication_status"]:
 
     st.markdown("---")
     st.caption("海運組油氣處理課")
-
