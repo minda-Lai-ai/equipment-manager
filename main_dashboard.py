@@ -1,27 +1,75 @@
 import streamlit as st
+import sqlite3
+import hashlib
 
-# 簡易登入使用者資料，可改從外部檔案或資料庫載入
-USER_CREDENTIALS = {
-    "admin": {"password": "123456", "role": "管理員"},
-    "user1": {"password": "abc123", "role": "一般使用者"}
-}
+# 建立或連接 SQLite 資料庫
+def init_db():
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            username TEXT PRIMARY KEY,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+    conn.close()
 
-# 登入頁面函數
+# 密碼哈希函數（避免明碼存密碼）
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+# 檢查使用者登入
+def verify_user(username, password):
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+    c.execute("SELECT password_hash, role FROM users WHERE username = ?", (username,))
+    row = c.fetchone()
+    conn.close()
+    if row:
+        stored_hash, role = row
+        if stored_hash == hash_password(password):
+            return True, role
+    return False, None
+
+# 新增使用者（可事後以 Streamlit 管理者頁面或外部腳本新增）
+def add_user(username, password, role="一般使用者"):
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+    password_hash = hash_password(password)
+    try:
+        c.execute("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+                  (username, password_hash, role))
+        conn.commit()
+    except sqlite3.IntegrityError:
+        st.warning("該帳號已存在！")
+    conn.close()
+
+# 初始化資料庫
+init_db()
+
+# 初始帳號（預設存在管理者帳號）
+add_user("admin", "123456", "管理員")
+
+# 登入頁面
 def login_page():
     st.title("🔒 登入系統")
+
     username = st.text_input("帳號")
     password = st.text_input("密碼", type="password")
     login_button = st.button("登入")
 
     if login_button:
-        if username in USER_CREDENTIALS and USER_CREDENTIALS[username]["password"] == password:
+        valid, role = verify_user(username, password)
+        if valid:
             st.session_state["authenticated"] = True
             st.session_state["username"] = username
-            st.session_state["role"] = USER_CREDENTIALS[username]["role"]
+            st.session_state["role"] = role
             st.success("登入成功！正在導向主控面板...")
             st.experimental_rerun()
         else:
-            st.error("帳號或密碼錯誤，請重新輸入。")
+            st.error("帳號或密碼錯誤。")
 
 # 登出功能
 def logout_button():
@@ -29,19 +77,21 @@ def logout_button():
         st.session_state["authenticated"] = False
         st.experimental_rerun()
 
-# 如果沒有登入，顯示登入頁面
+# 登入檢查
 if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
     login_page()
     st.stop()
 
-# 如果登入成功，顯示你的原主控面板
-st.sidebar.write(f"您好，{st.session_state['username']}（{st.session_state['role']}）")
+# 登入成功後顯示使用者身分
+st.sidebar.write(f"👋 您好，{st.session_state['username']}（{st.session_state['role']}）")
 logout_button()
 
 st.set_page_config(page_title="設備管理主控面板", layout="wide")
-st.title("🧭 設備管理主控面板")
 
+st.title("🧭 設備管理主控面板")
 st.markdown("請選擇下列功能進入各模組頁面。")
+# ... 你的頁面連結區塊
+
 st.markdown("---")
 
 # 🔷 資料庫模組（最大按鈕）
