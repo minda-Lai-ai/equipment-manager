@@ -6,7 +6,7 @@ from google.api_core.exceptions import PermissionDenied, GoogleAPICallError, Ret
 
 # 使用一個唯一的 App Name 來避免衝突
 APP_NAME = "equipment_manager_app"
-TEST_TIMEOUT_SECONDS = 15
+# TEST_TIMEOUT_SECONDS 已經移除
 
 # 使用 st.cache_resource 確保 Firebase 僅初始化一次
 @st.cache_resource(show_spinner="⏳ 正在初始化 Firebase 連線...")
@@ -28,16 +28,16 @@ def get_firestore_client():
         # 嘗試讀取一個絕對不存在的文件來測試連線和權限
         test_doc_ref = db.collection("__connection_test__").document("test_document")
         
-        # 使用一個較長的超時時間，以應對部署環境的延遲
-        test_doc_ref.get(timeout=TEST_TIMEOUT_SECONDS) 
+        # 移除 explicit timeout，讓底層 SDK 決定超時，通常可以更快失敗。
+        test_doc_ref.get() 
 
         # 如果成功執行到這裡，表示連線和權限通過
         return db
 
-    except PermissionDenied:
+    except PermissionDenied as e:
         # 如果規則不允許讀取 test collection，則清除快取，並拋出錯誤
         st.cache_resource.clear()
-        raise PermissionDenied("連線成功，但權限被拒絕。請檢查 Firestore Security Rules 是否允許 Admin SDK 讀寫。")
+        raise PermissionDenied(f"連線成功，但權限被拒絕。請檢查 Firestore Security Rules 是否允許 Admin SDK 讀寫。詳情: {e}")
     except (GoogleAPICallError, RetryError) as e:
         # 如果發生網路錯誤或金鑰錯誤 (如 Invalid JWT Signature)
         st.cache_resource.clear() # 清除快取，以便下次重新載入修正過後的 secrets.toml
