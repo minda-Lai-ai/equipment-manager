@@ -2,7 +2,7 @@ import streamlit as st
 import sqlite3
 import hashlib
 
-# --- 資料庫初始化 ---
+# --- 資料庫與認證函數 ---
 def init_db():
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
@@ -54,13 +54,10 @@ def user_exists(username):
     conn.close()
     return exists
 
-# 初始化資料庫與預設管理員帳號
 init_db()
 add_user("admin", "123456", "管理員")
 
-# ======================
-# 登入頁面
-# ======================
+# --- 登入頁面 ---
 def login_page():
     st.title("🔒 登入系統")
     username = st.text_input("帳號")
@@ -71,12 +68,11 @@ def login_page():
             st.session_state["authenticated"] = True
             st.session_state["username"] = username
             st.session_state["role"] = role
+            st.experimental_rerun()
         else:
             st.error("帳號或密碼錯誤。")
 
-# ======================
-# 管理員新增帳號頁面
-# ======================
+# --- 管理員新增帳號頁面 ---
 def register_page():
     st.header("👤 新增使用者（限管理員）")
     new_username = st.text_input("新帳號")
@@ -86,45 +82,86 @@ def register_page():
         if user_exists(new_username):
             st.warning("此帳號已存在！")
         elif not new_username or not new_password:
-            st.warning("請填寫帳號及密碼。")
+            st.warning("請填寫帳號與密碼。")
         else:
             ok = add_user(new_username, new_password, new_role)
             if ok:
-                st.success(f"已成功新增使用者：{new_username}（{new_role}）")
+                st.success(f"成功新增使用者：{new_username}（{new_role}）")
             else:
-                st.error("新增失敗，請重試。")
+                st.error("新增失敗。")
 
-# ======================
-# 登出功能
-# ======================
+# --- 登出 ---
 def logout_button():
-    if st.button("登出", key="logout"):
-        st.session_state["authenticated"] = False
+    if st.sidebar.button("登出"):
+        st.session_state.clear()
         st.experimental_rerun()
 
-# ======================
-# 權限檢查流程
-# ======================
+# --- 權限檢查 ---
 if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
     login_page()
     st.stop()
 
-# 登入後 sidebar 顯示使用者身分, 登出, 管理員啟動新增帳戶頁
-st.sidebar.write(f"👋 您好，{st.session_state['username']}（{st.session_state['role']}）")
+# --- 側邊欄登入者訊息 ---
+st.sidebar.markdown("---")
+st.sidebar.write(f"👤 使用者：{st.session_state['username']}")
+st.sidebar.write(f"🧩 角色：{st.session_state['role']}")
 logout_button()
+st.sidebar.markdown("---")
 
-if st.session_state.get("role", "") == "管理員":
-    st.sidebar.subheader("🛡️ 管理功能")
-    show_register = st.sidebar.checkbox("新增使用者")
-    if show_register:
+# --- 僅管理員能進入新增使用者頁 ---
+if st.session_state["role"] == "管理員":
+    if st.sidebar.checkbox("📋 管理使用者帳號"):
         register_page()
+        st.stop()
 
-# ======================
-# 主控面板頁面內容 （登入後才會進入）
-# ======================
+# ==============================
+# 側邊欄功能連結排序
+# ==============================
+
+st.sidebar.subheader("🧭 Navigation")
+
+# 分組 1
+st.sidebar.page_link("main_dashboard.py", label="Main Dashboard", icon="🏠")
+st.sidebar.markdown("---")
+
+# 分組 2
+st.sidebar.page_link("pages/equipment_system.py", label="設備請購維修系統", icon="📋")
+st.sidebar.page_link("pages/equipment_detail.py", label="設備詳細資料", icon="🔍")
+st.sidebar.page_link("pages/edit_data.py", label="編輯設備資料", icon="✏️")
+st.sidebar.page_link("pages/delete_data.py", label="刪除設備資料", icon="🗑️")
+st.sidebar.page_link("pages/new_equipment.py", label="新增設備", icon="🆕")
+st.sidebar.page_link("pages/view_main_equipment.py", label="主設備資料總覽", icon="🔍")
+st.sidebar.markdown("---")
+
+# 分組 3
+st.sidebar.page_link("pages/maintenance_log.py", label="設備檢修保養履歷", icon="🧾")
+st.sidebar.page_link("pages/edit_log.py", label="編輯履歷資料", icon="✏️")
+st.sidebar.page_link("pages/add_event.py", label="新增保養事件", icon="🆕")
+st.sidebar.markdown("---")
+
+# 分組 4
+st.sidebar.page_link("pages/report_abnormal.py", label="設備異常回報", icon="📸")
+st.sidebar.page_link("pages/export_abnormal.py", label="匯出異常報告", icon="📤")
+st.sidebar.page_link("pages/abnormal_overview.py", label="異常紀錄總覽", icon="📋")
+st.sidebar.markdown("---")
+
+# 分組 5
+st.sidebar.page_link("pages/save_data.py", label="資料儲存模組", icon="💾")
+st.sidebar.page_link("pages/view_data.py", label="瀏覽資料庫內容", icon="🔍")
+st.sidebar.page_link("pages/view_main_equipment.py", label="主設備總覽", icon="🔍")
+st.sidebar.page_link("pages/view_maintenance_log.py", label="保養履歷總覽", icon="🧾")
+st.sidebar.markdown("---")
+
+# 分組 6
+st.sidebar.page_link("pages/guide.py", label="使用者手冊", icon="📘")
+
+# ==============================
+# 主畫面內容
+# ==============================
 st.set_page_config(page_title="設備管理主控面板", layout="wide")
 st.title("🧭 設備管理主控面板")
-st.markdown("請選擇下列功能進入各模組頁面。")
+st.markdown("請選擇側邊功能連結進入各模組頁面。")
+
 # ...把你的原分頁連結按鈕、模組內容放在這裡
 
 st.markdown("---")
