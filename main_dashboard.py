@@ -115,10 +115,9 @@ if st.session_state["role"] == "管理員":
         st.stop()
 
 # ==============================
-# 側邊欄功能連結排序
+# 側邊欄頁面導覽連結（移到最上方）
 # ==============================
-
-st.sidebar.subheader("🧭 Navigation")
+st.sidebar.title("🧭 功能導覽")
 
 # 分組 1
 st.sidebar.page_link("main_dashboard.py", label="Main Dashboard", icon="🏠")
@@ -154,6 +153,23 @@ st.sidebar.markdown("---")
 
 # 分組 6
 st.sidebar.page_link("pages/guide.py", label="使用者手冊", icon="📘")
+
+# ==============================
+# 側邊欄下方：使用者資訊與管理功能
+# ==============================
+st.sidebar.markdown("---")
+st.sidebar.write(f"👤 使用者：{st.session_state['username']}")
+st.sidebar.write(f"🧩 角色：{st.session_state['role']}")
+
+if st.session_state["role"] == "管理員":
+    if st.sidebar.button("➕ 新增使用者帳號"):
+        register_page()
+        st.stop()
+
+if st.sidebar.button("🚪 登出"):
+    st.session_state.clear()
+    st.experimental_rerun()
+
 
 # ==============================
 # 主畫面內容
