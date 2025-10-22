@@ -38,8 +38,11 @@ authenticator = stauth.Authenticate(
 
 # --- 4. 登入 UI（主頁面） ---
 st.title("🔐 使用者登入")
-# 使用位置參數 'main'，避免 TypeError
-name, authentication_status, username = authenticator.login('🔑 登入系統', 'main')
+# 修正：將 'main' 明確指定給 location 參數，避免 Streamlit Authenticator 在某些環境下因位置參數導致的 ValueError。
+name, authentication_status, username = authenticator.login(
+    '🔑 登入系統', 
+    location='main' 
+)
 
 # --- 5. 處理登入狀態 ---
 if st.session_state.get("authentication_status") is False:
