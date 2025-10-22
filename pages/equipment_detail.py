@@ -1,7 +1,5 @@
 import streamlit as st
 import pandas as pd
-from firebase_init import get_firestore
-db = get_firestore()
 from utils.status_utils import status_light, maintenance_light
 
 # 載入資料庫
