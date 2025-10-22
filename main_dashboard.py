@@ -12,6 +12,12 @@ st.set_page_config(page_title="🧭 設備管理主控面板", layout="wide")
 try:
     with open('config.yaml') as file:
         config = yaml.load(file, Loader=SafeLoader)
+    
+    # 🚨 檢查關鍵配置是否存在
+    if not config or 'cookie' not in config or 'credentials' not in config:
+        st.error("⚠️ config.yaml 載入結構錯誤，請檢查 'cookie' 和 'credentials' 區塊。")
+        st.stop()
+        
 except FileNotFoundError:
     st.error("⚠️ 找不到 config.yaml 檔案，請檢查檔案路徑！")
     st.stop()
@@ -21,7 +27,7 @@ except Exception as e:
 
 
 # --- 3. 初始化 Authenticator ---
-# 移除 'pre-authorized' 參數，避免 DeprecationError
+# 移除了 'pre-authorized' 參數，避免 DeprecationError
 authenticator = stauth.Authenticate(
     config['credentials'],
     config['cookie']['name'],
@@ -47,7 +53,6 @@ elif st.session_state["authentication_status"] is None:
 elif st.session_state["authentication_status"]:
     # 成功登入
     # 👤 顯示登入者資訊與登出按鈕
-    # name 來自 stauth.Authenticate 傳回的值
     st.sidebar.success(f"👤 登入者：{name}（{username}）")
 
     # 🚪 登出按鈕
