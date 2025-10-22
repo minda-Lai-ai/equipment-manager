@@ -1,4 +1,4 @@
-# main_dashboard.py - 使用 Streamlit Authenticator 的設備管理主控面板（修正版）
+# main_dashboard.py - 使用 Streamlit Authenticator 的設備管理主控面板（修正版，主頁面登入）
 
 import streamlit as st
 import streamlit_authenticator as stauth
@@ -36,19 +36,17 @@ authenticator = stauth.Authenticate(
     cookie_config['expiry_days']
 )
 
-# --- 4. 登入 UI ---
-st.sidebar.title("🔐 使用者登入")
-with st.sidebar:
-    name, authentication_status, username = authenticator.login('🔑 登入系統', 'main')
+# --- 4. 登入 UI（主頁面） ---
+st.title("🔐 使用者登入")
+name, authentication_status, username = authenticator.login('🔑 登入系統', 'main')
 
 # --- 5. 處理登入狀態 ---
 if st.session_state["authentication_status"] is False:
-    st.sidebar.error("❌ 用戶名或密碼錯誤")
-    st.error("⚠️ 請檢查用戶名和密碼後重試")
+    st.error("❌ 用戶名或密碼錯誤")
+    st.warning("⚠️ 請檢查用戶名和密碼後重試")
     st.stop()
 elif st.session_state["authentication_status"] is None:
-    st.sidebar.info("👆 請輸入用戶名和密碼，然後按「🔑 登入系統」")
-    st.info("🔐 請先登入才能使用系統")
+    st.info("👆 請輸入用戶名和密碼，然後按「🔑 登入系統」")
     st.stop()
 elif st.session_state["authentication_status"]:
     # 成功登入
