@@ -1,9 +1,9 @@
 # config.yaml 檔案內容 (Streamlit Authenticator 配置)
-# 請將此內容儲存在您的專案根目錄下的 config.yaml 檔案中。
 
 cookie:
   expiry_days: 30
-  key: random_signature_key_for_cookie
+  # 替換為更長的隨機密鑰，確保符合 Streamlit Authenticator 的要求
+  key: "a2pYQ1B1c2QyY0tHNUh0YVdnNlpJcFFmYndzM1U5Z08zY1h1Y2Y3V1h6bDFjQXVxWnl1MEdKcnY=" 
   name: equipment_app_cookie
 
 credentials:
@@ -16,5 +16,3 @@ credentials:
       email: test@example.com
       name: 測試用戶
       password: $2b$12$R.S9d/Q1VvB2K8W7S7y/qON.wL7jE5X9K/t9eY0OQG.Q4/t6Xg/U.
-
-# 注意：上面的密碼是 hash 過的，對應的明文密碼 (Password) 都是 123456。
