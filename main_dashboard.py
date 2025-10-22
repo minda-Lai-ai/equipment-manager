@@ -1,16 +1,24 @@
 import streamlit as st
-import sqlite3
-import hashlib
+from streamlit.runtime.scriptrunner import add_script_run_ctx
+import streamlit.web.bootstrap
 
-st.set_page_config(page_title="設備管理主控面板", layout="wide", initial_sidebar_state="expanded", page_icon="🧭", menu_items=None)
+# 停止 Streamlit 自動頁面索引功能
+st.set_page_config(page_title="設備管理主控面板", layout="wide", page_icon="🧭")
 st.markdown(
     """
     <style>
-    section[data-testid="stSidebarNav"] {display: none;}
+    /* 隱藏預設的左側頁面選單 */
+    section[data-testid="stSidebarNav"] {display: none !important;}
+    /* 隱藏上方自動產生的標題連結 */
+    div[data-testid="stSidebarNavLink"] {display: none !important;}
+    div[data-testid="stSidebarNavItems"] {display: none !important;}
     </style>
     """,
     unsafe_allow_html=True
 )
+
+import sqlite3
+import hashlib
 
 # --- 資料庫與認證函數 ---
 def init_db():
