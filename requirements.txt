@@ -1,7 +1,5 @@
-streamlit
 pandas
 Pillow
 firebase-admin
 fpdf
-streamlit-authenticator
 pyyaml
