@@ -1,111 +1,94 @@
-# pages/login.py
-
 import streamlit as st
-import time
-from firebase_init import get_firestore_client
 import json
-import firebase_admin
-from firebase_admin import firestore
-# 關鍵修正：從 google.api_core 匯入異常，這在 Streamlit 環境中更穩定
-from google.api_core.exceptions import PermissionDenied, GoogleAPICallError, NotFound, InternalServerError
+from firebase_init import get_firestore_client
+from google.api_core.exceptions import PermissionDenied, NotFound, GoogleAPICallError
+import sys # 匯入 sys 用於顯示錯誤詳情
 
-# 頁面配置
 st.set_page_config(page_title="🔐 使用者登入", layout="centered")
 st.title("🔐 使用者登入")
 
-# 獲取 Firestore 客戶端（使用快取且帶錯誤診斷）
+# 1. 嘗試初始化 Firestore 客戶端
 try:
     db = get_firestore_client()
-except Exception:
+except Exception as e:
+    # 如果初始化失敗（通常是 secrets.toml 或網路問題），直接顯示錯誤
+    st.error(f"❌ Firebase 連線或初始化失敗。請檢查 secrets.toml。錯誤詳情: {type(e).__name__}，{e}")
     st.stop()
+    
+# 如果初始化成功，顯示一個綠色提示 (方便快速判斷連線狀態)
+st.success("✅ Firebase 連線成功，請登入或註冊。")
 
-
-# ----------------------------------------
-# 👤 登入區塊
-# ----------------------------------------
-st.subheader("使用者登入")
-email_login = st.text_input("Email (登入)", key="email_login")
-password_login = st.text_input("密碼 (登入)", type="password", key="password_login")
+# --- 登入表單 ---
+st.header("👤 登入系統")
+email = st.text_input("Email", key="login_email")
+password = st.text_input("密碼", type="password", key="login_password")
 
 if st.button("登入", use_container_width=True):
-    if not email_login or not password_login:
-        st.error("❌ 請輸入完整的 Email 和密碼。")
-    else:
-        try:
-            # 嘗試執行 Firestore 讀取操作
-            user_ref = db.collection("users").document(email_login)
-            user_doc = user_ref.get() # 這裡可能會卡住或失敗
-
-            if user_doc.exists:
-                user_data = user_doc.to_dict()
-                
-                # --- 除錯資訊 ---
-                st.info(f"💡 嘗試登入 Email: {email_login}")
-                st.info(f"💡 從 Firestore 讀取到的文件內容 (用於除錯): {json.dumps(user_data, ensure_ascii=False, indent=2)}")
-                # --- 除錯資訊 ---
-
-                # 密碼比對
-                if user_data.get("password") == password_login:
-                    st.session_state["user"] = {
-                        "email": email_login,
-                        "name": user_data.get("name", email_login.split('@')[0]), 
-                        "role": user_data.get("role", "user")
-                    }
-                    st.success("✅ 登入成功，正在導向主頁...")
-                    time.sleep(0.5)
-                    st.switch_page("main_dashboard.py")
-                else:
-                    db_password = user_data.get("password", "")
-                    st.error(f"❌ 登入失敗：密碼錯誤。 (輸入長度: {len(password_login)}, 資料庫長度: {len(db_password)})")
-            else:
-                st.error("❌ 登入失敗：此帳號在 Firestore 的 users collection 中不存在。")
+    if not email or not password:
+        st.error("請輸入 Email 和密碼")
+        st.stop()
         
-        # 捕捉 Firestore 操作特定的錯誤 (使用更通用的 API 異常)
-        except PermissionDenied:
-            st.error("❌ 登入失敗：Firestore 拒絕了操作。請檢查您的 **Firestore 安全規則**。")
-        except GoogleAPICallError as e:
-            st.error(f"❌ 網路連線或 API 呼叫錯誤。請檢查部署環境的網路狀態或金鑰。錯誤詳情: {e}")
-        except InternalServerError:
-            st.error("❌ 登入失敗：Google 服務內部錯誤。請稍後再試。")
-        except Exception as e:
-            st.error(f"❌ 登入時發生未預期錯誤。錯誤類型: {type(e).__name__}，詳情: {e}")
+    try:
+        user_ref = db.collection("users").document(email)
+        user_doc = user_ref.get()
 
-st.markdown("---")
-
-# ----------------------------------------
-# 🆕 註冊新帳號 (測試用) 區塊
-# ----------------------------------------
-with st.expander("🆕 註冊新帳號 (測試用)"):
-    email_reg = st.text_input("Email (註冊)", key="email_reg")
-    password_reg = st.text_input("密碼 (註冊)", type="password", key="password_reg")
-    name_reg = st.text_input("您的姓名", key="name_reg")
-    role_reg = st.selectbox("角色權限", ["user", "admin", "guest"], key="role_reg", index=0)
-
-    if st.button("註冊新帳號", use_container_width=True):
-        if not email_reg or not password_reg or not name_reg:
-            st.error("❌ 請輸入完整的 Email、密碼和姓名。")
+        if user_doc.exists:
+            user_data = user_doc.to_dict()
+            
+            # 💡 除錯：顯示從 Firestore 讀取到的資料，用來比對密碼欄位名稱
+            st.info(f"💡 從 Firestore 讀取到的文件內容：{user_data}")
+            
+            # 注意：這裡直接比對明文密碼，請考慮安全風險
+            if "password" in user_data and user_data["password"] == password:
+                st.session_state["user"] = {
+                    "email": email,
+                    "name": user_data.get("name", "未命名使用者"),
+                    "role": user_data.get("role", "user")
+                }
+                st.success("✅ 登入成功，正在導向主頁...")
+                # 使用 switch_page 導航到主頁的 page_title
+                st.switch_page("🧭 設備管理主控面板") 
+            else:
+                st.error("❌ 登入失敗：密碼錯誤，或 Firestore 文件中缺少 'password' 欄位。")
         else:
-            try:
-                new_user_ref = db.collection("users").document(email_reg)
-                
-                if new_user_ref.get().exists:
-                    st.warning("⚠️ 此 Email 帳號已存在，請直接登入或使用其他 Email 註冊。")
-                else:
-                    # 寫入新使用者資料
-                    new_user_ref.set({
-                        "email": email_reg,
-                        "password": password_reg,
-                        "name": name_reg,
-                        "role": role_reg,
-                        "created_at": firestore.SERVER_TIMESTAMP
-                    })
-                    st.success(f"✅ 帳號註冊成功！Email: {email_reg}，請使用此帳號登入。")
-            except PermissionDenied:
-                st.error("❌ 註冊失敗：Firestore 拒絕了操作。請檢查您的 **Firestore 安全規則**。")
-            except GoogleAPICallError as e:
-                st.error(f"❌ 網路連線或 API 呼叫錯誤。錯誤詳情: {e}")
-            except InternalServerError:
-                st.error("❌ 註冊失敗：Google 服務內部錯誤。請稍後再試。")
-            except Exception as e:
-                st.error(f"❌ 註冊時發生未預期錯誤。錯誤類型: {type(e).__name__}，詳情: {e}")
+            st.error("❌ 登入失敗：此帳號在 Firestore 的 users collection 中不存在。")
 
+    except PermissionDenied:
+        st.error("❌ 登入失敗：Firestore 權限不足 (Permission Denied)。請檢查您的 Firebase Security Rules 是否允許 Admin SDK 讀取 users collection。")
+    except Exception as e:
+        # 捕捉其他所有操作錯誤，避免頁面卡住
+        st.error(f"❌ 登入時發生無法預期的錯誤。錯誤類型: {type(e).__name__}，詳情: {e}")
+
+# --- 註冊新帳號 (測試用) ---
+st.markdown("---")
+with st.expander("📝 註冊新帳號 (測試用 - 確保資料庫有初始資料)"):
+    reg_email = st.text_input("註冊 Email (用作文件 ID)", key="reg_email")
+    reg_password = st.text_input("註冊密碼", type="password", key="reg_password")
+    reg_name = st.text_input("顯示名稱", key="reg_name", value="")
+    
+    if st.button("註冊新帳號", type="primary", use_container_width=True):
+        if not reg_email or not reg_password:
+            st.error("Email 和密碼不能為空")
+            st.stop()
+
+        try:
+            user_ref = db.collection("users").document(reg_email)
+            
+            # 檢查帳號是否已存在
+            if user_ref.get().exists:
+                st.warning("⚠️ 此帳號已存在，請直接登入。")
+            else:
+                # 新增使用者文件（明文儲存密碼）
+                user_ref.set({
+                    "email": reg_email,
+                    "password": reg_password, # 🚨 嚴重安全風險！強烈建議使用 Firebase Auth 進行密碼雜湊
+                    "name": reg_name,
+                    "role": "user",
+                    "created_at": firestore.SERVER_TIMESTAMP
+                })
+                st.success(f"✅ 帳號 {reg_email} 註冊成功！請使用此帳號登入。")
+                
+        except PermissionDenied:
+            st.error("❌ 註冊失敗：Firestore 權限不足 (Permission Denied)。請檢查您的 Firebase Security Rules 是否允許 Admin SDK 寫入 users collection。")
+        except Exception as e:
+            st.error(f"❌ 註冊時發生無法預期的錯誤。錯誤類型: {type(e).__name__}，詳情: {e}")
