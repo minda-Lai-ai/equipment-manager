@@ -2,7 +2,7 @@ import streamlit as st
 import sqlite3
 import hashlib
 
-# 建立或連接 SQLite 資料庫
+# --- 資料庫初始化：自動建立 users.db 與 users 資料表 ---
 def init_db():
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
@@ -16,11 +16,11 @@ def init_db():
     conn.commit()
     conn.close()
 
-# 密碼哈希函數（避免明碼存密碼）
+# --- 密碼雜湊 ---
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
-# 檢查使用者登入
+# --- 帳密驗證 ---
 def verify_user(username, password):
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
@@ -33,7 +33,7 @@ def verify_user(username, password):
             return True, role
     return False, None
 
-# 新增使用者（可事後以 Streamlit 管理者頁面或外部腳本新增）
+# --- 新增使用者（只在不存在 admin 時執行） ---
 def add_user(username, password, role="一般使用者"):
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
@@ -43,54 +43,48 @@ def add_user(username, password, role="一般使用者"):
                   (username, password_hash, role))
         conn.commit()
     except sqlite3.IntegrityError:
-        st.warning("該帳號已存在！")
+        pass  # 已存在就不重複新增
     conn.close()
 
-# 初始化資料庫
+# --- 初始化資料庫和預設 admin 帳號 ---
 init_db()
-
-# 初始帳號（預設存在管理者帳號）
 add_user("admin", "123456", "管理員")
 
-# 登入頁面
+# --- 登入頁面 ---
 def login_page():
     st.title("🔒 登入系統")
-
     username = st.text_input("帳號")
     password = st.text_input("密碼", type="password")
-    login_button = st.button("登入")
-
-    if login_button:
+    if st.button("登入"):
         valid, role = verify_user(username, password)
         if valid:
             st.session_state["authenticated"] = True
             st.session_state["username"] = username
             st.session_state["role"] = role
-            st.success("登入成功！正在導向主控面板...")
-            st.experimental_rerun()
         else:
             st.error("帳號或密碼錯誤。")
 
-# 登出功能
+# --- 登出邏輯 ---
 def logout_button():
     if st.button("登出"):
         st.session_state["authenticated"] = False
         st.experimental_rerun()
 
-# 登入檢查
+# --- 權限檢查&內容顯示 ---
 if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
     login_page()
     st.stop()
 
-# 登入成功後顯示使用者身分
+# --- 登入後顯示主控面板（可加入你的原頁面內容） ---
 st.sidebar.write(f"👋 您好，{st.session_state['username']}（{st.session_state['role']}）")
 logout_button()
 
+# --- 原本主控面板頁面內容放在這裡 ---
 st.set_page_config(page_title="設備管理主控面板", layout="wide")
 
 st.title("🧭 設備管理主控面板")
 st.markdown("請選擇下列功能進入各模組頁面。")
-# ... 你的頁面連結區塊
+# ...（頁面內容依你的原檔案繼續寫）
 
 st.markdown("---")
 
