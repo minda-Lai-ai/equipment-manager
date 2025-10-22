@@ -1,9 +1,6 @@
 import streamlit as st
 import pandas as pd
 
-from firebase_init import get_firestore
-db = get_firestore()
-
 st.set_page_config(page_title="📋 設備請購維修系統", layout="wide")
 st.title("📋 設備請購維修系統")
 
