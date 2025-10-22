@@ -96,6 +96,34 @@ def logout_button():
         st.session_state.clear()
         st.experimental_rerun()
 
+# --- 修改密碼 ---
+def change_password_page():
+    st.subheader("🔑 修改密碼")
+    old_pw = st.text_input("舊密碼", type="password")
+    new_pw = st.text_input("新密碼", type="password")
+    confirm_pw = st.text_input("確認新密碼", type="password")
+
+    if st.button("更新密碼"):
+        conn = sqlite3.connect("users.db")
+        c = conn.cursor()
+        c.execute("SELECT password_hash FROM users WHERE username = ?", (st.session_state["username"],))
+        row = c.fetchone()
+        if not row:
+            st.error("帳號不存在。")
+        elif hash_password(old_pw) != row[0]:
+            st.error("舊密碼不正確。")
+        elif new_pw != confirm_pw:
+            st.warning("兩次新密碼不一致。")
+        else:
+            c.execute("UPDATE users SET password_hash=? WHERE username=?",
+                      (hash_password(new_pw), st.session_state["username"]))
+            conn.commit()
+            conn.close()
+            st.success("密碼更新成功！")
+            st.info("下次登入請使用新密碼。")
+            st.session_state["authenticated"] = False
+            st.experimental_rerun()
+
 # --- 權限檢查 ---
 if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
     login_page()
