@@ -198,6 +198,9 @@ if st.sidebar.button("🚪 登出"):
     st.session_state.clear()
     st.experimental_rerun()
 
+if st.sidebar.button("🛠 修改密碼"):
+    change_password_page()
+    st.stop()
 
 # ==============================
 # 主畫面內容
