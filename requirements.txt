@@ -6,4 +6,3 @@ fpdf
 streamlit-authenticator
 pyyaml
 sqlite3
-hashlib
