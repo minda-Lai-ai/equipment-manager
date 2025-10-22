@@ -1,4 +1,9 @@
 import streamlit as st
+
+if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
+    st.error("尚未登入或權限不足，請由主畫面登入後再瀏覽此頁。")
+    st.stop()
+
 import pandas as pd
 
 st.set_page_config(page_title="🔍 保養履歷資料總覽", layout="wide")
