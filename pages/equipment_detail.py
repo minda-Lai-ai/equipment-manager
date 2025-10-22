@@ -1,8 +1,14 @@
-import streamlit as st
+iimport streamlit as st
 
+# 權限檢查
 if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
-    st.error("尚未登入或權限不足，請由主畫面登入後再瀏覽此頁。")
+    st.error("尚未登入或登入已逾時，請回主畫面重新登入。")
     st.stop()
+
+# 顯示登入者資訊於頁首或側邊欄
+st.sidebar.markdown("---")
+st.sidebar.write(f"👤 使用者：{st.session_state['username']}")
+st.sidebar.write(f"🧩 角色：{st.session_state['role']}")
 
 import pandas as pd
 from utils.status_utils import status_light, maintenance_light
