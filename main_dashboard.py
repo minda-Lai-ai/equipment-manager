@@ -1,5 +1,43 @@
 import streamlit as st
 
+# 簡易登入使用者資料，可改從外部檔案或資料庫載入
+USER_CREDENTIALS = {
+    "admin": {"password": "123456", "role": "管理員"},
+    "user1": {"password": "abc123", "role": "一般使用者"}
+}
+
+# 登入頁面函數
+def login_page():
+    st.title("🔒 登入系統")
+    username = st.text_input("帳號")
+    password = st.text_input("密碼", type="password")
+    login_button = st.button("登入")
+
+    if login_button:
+        if username in USER_CREDENTIALS and USER_CREDENTIALS[username]["password"] == password:
+            st.session_state["authenticated"] = True
+            st.session_state["username"] = username
+            st.session_state["role"] = USER_CREDENTIALS[username]["role"]
+            st.success("登入成功！正在導向主控面板...")
+            st.experimental_rerun()
+        else:
+            st.error("帳號或密碼錯誤，請重新輸入。")
+
+# 登出功能
+def logout_button():
+    if st.button("登出"):
+        st.session_state["authenticated"] = False
+        st.experimental_rerun()
+
+# 如果沒有登入，顯示登入頁面
+if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
+    login_page()
+    st.stop()
+
+# 如果登入成功，顯示你的原主控面板
+st.sidebar.write(f"您好，{st.session_state['username']}（{st.session_state['role']}）")
+logout_button()
+
 st.set_page_config(page_title="設備管理主控面板", layout="wide")
 st.title("🧭 設備管理主控面板")
 
