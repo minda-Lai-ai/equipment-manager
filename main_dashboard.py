@@ -1,22 +1,4 @@
 import streamlit as st
-from streamlit.runtime.scriptrunner import add_script_run_ctx
-import streamlit.web.bootstrap
-
-# 停止 Streamlit 自動頁面索引功能
-st.set_page_config(page_title="設備管理主控面板", layout="wide", page_icon="🧭")
-st.markdown(
-    """
-    <style>
-    /* 隱藏預設的左側頁面選單 */
-    section[data-testid="stSidebarNav"] {display: none !important;}
-    /* 隱藏上方自動產生的標題連結 */
-    div[data-testid="stSidebarNavLink"] {display: none !important;}
-    div[data-testid="stSidebarNavItems"] {display: none !important;}
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
 import sqlite3
 import hashlib
 
