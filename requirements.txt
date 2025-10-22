@@ -3,5 +3,5 @@ pandas
 Pillow
 firebase-admin
 fpdf
-streamlit-authenticator==0.3.0
+streamlit-authenticator>=0.4.0
 pyyaml==6.0.1
