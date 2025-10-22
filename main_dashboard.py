@@ -8,34 +8,36 @@ from yaml.loader import SafeLoader
 # --- 1. 頁面配置 ---
 st.set_page_config(page_title="🧭 設備管理主控面板", layout="wide")
 
-# --- 2. 載入驗證配置 ---
+# --- 2. 載入驗證配置 (嚴格檢查) ---
 try:
     with open('config.yaml') as file:
         config = yaml.load(file, Loader=SafeLoader)
     
-    # 🚨 檢查關鍵配置是否存在
-    if not config or 'cookie' not in config or 'credentials' not in config:
-        st.error("⚠️ config.yaml 載入結構錯誤，請檢查 'cookie' 和 'credentials' 區塊。")
+    # 🚨 檢查：如果配置檔案為空或缺少關鍵頂層鍵，則停止
+    if not isinstance(config, dict) or 'cookie' not in config or 'credentials' not in config:
+        st.error("⚠️ config.yaml 載入失敗或結構錯誤：缺少 'cookie' 或 'credentials' 區塊。請確認檔案內容。")
         st.stop()
         
 except FileNotFoundError:
     st.error("⚠️ 找不到 config.yaml 檔案，請檢查檔案路徑！")
     st.stop()
 except Exception as e:
-    st.error(f"⚠️ 載入配置檔案時發生錯誤：{e}")
+    # 捕捉 YAML 解析錯誤等
+    st.error(f"⚠️ 載入配置檔案時發生錯誤。請檢查 YAML 縮排和格式是否正確：{e}")
     st.stop()
 
 
-# --- 3. 初始化 Authenticator ---
-# 移除了 'pre-authorized' 參數，避免 DeprecationError
+# --- 3. 初始化 Authenticator (使用 .get() 確保安全存取) ---
+# 使用 .get() 確保即使子鍵缺失，程式也不會崩潰
+cookie_config = config.get('cookie', {})
 authenticator = stauth.Authenticate(
-    config['credentials'],
-    config['cookie']['name'],
-    config['cookie']['key'],
-    config['cookie']['expiry_days']
+    config.get('credentials', {}),
+    cookie_config.get('name', 'st_auth_cookie'),
+    cookie_config.get('key', 'some_random_key_here'),
+    cookie_config.get('expiry_days', 30)
 )
 
-# --- 4. 登入 UI 與狀態檢查 ---
+# --- 4. 登入 UI 與狀態檢查 (以下程式碼保持不變) ---
 # 在側邊欄顯示登入表單
 st.sidebar.title("🔐 使用者登入")
 name, authentication_status, username = authenticator.login(location='sidebar')
@@ -137,3 +139,4 @@ elif st.session_state["authentication_status"]:
 
     st.markdown("---")
     st.caption("海運組油氣處理課")
+
