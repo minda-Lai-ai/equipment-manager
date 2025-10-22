@@ -38,8 +38,8 @@ authenticator = stauth.Authenticate(
 
 # --- 4. 登入 UI（主頁面） ---
 st.title("🔐 使用者登入")
-# 明確指定 location='main'，確保在主頁面渲染
-name, authentication_status, username = authenticator.login('🔑 登入系統', location='main')
+# 使用位置參數 'main'，避免 TypeError
+name, authentication_status, username = authenticator.login('🔑 登入系統', 'main')
 
 # --- 5. 處理登入狀態 ---
 if st.session_state.get("authentication_status") is False:
@@ -52,7 +52,7 @@ elif st.session_state.get("authentication_status") is None:
 elif st.session_state.get("authentication_status"):
     # 成功登入
     st.sidebar.success(f"✅ 已登入：{name} ({username})")
-    authenticator.logout('🚪 登出', location='sidebar', key='logout_button')
+    authenticator.logout('🚪 登出', 'sidebar', key='logout_button')
 
     # --- 6. 主控面板內容 ---
     st.markdown(
