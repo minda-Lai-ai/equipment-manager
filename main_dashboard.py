@@ -6,8 +6,8 @@ import yaml
 from yaml.loader import SafeLoader
 
 # --- 1. 頁面配置 ---
-st.set_page_config(page_title="🧭 設備管理主控面板", layout="wide")
-
+＃st.set_page_config(page_title="🧭 設備管理主控面板", layout="wide")
+＃
 # --- 2. 載入驗證配置 (嚴格檢查) ---
 ＃try:
 ＃    with open('config.yaml') as file:
