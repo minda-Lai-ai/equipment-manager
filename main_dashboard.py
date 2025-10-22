@@ -2,7 +2,7 @@ import streamlit as st
 import sqlite3
 import hashlib
 
-# --- 資料庫初始化：自動建立 users.db 與 users 資料表 ---
+# --- 資料庫初始化 ---
 def init_db():
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
@@ -16,11 +16,9 @@ def init_db():
     conn.commit()
     conn.close()
 
-# --- 密碼雜湊 ---
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
-# --- 帳密驗證 ---
 def verify_user(username, password):
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
@@ -33,24 +31,36 @@ def verify_user(username, password):
             return True, role
     return False, None
 
-# --- 新增使用者（只在不存在 admin 時執行） ---
 def add_user(username, password, role="一般使用者"):
     conn = sqlite3.connect("users.db")
     c = conn.cursor()
     password_hash = hash_password(password)
     try:
-        c.execute("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
-                  (username, password_hash, role))
+        c.execute(
+            "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+            (username, password_hash, role))
         conn.commit()
+        return True
     except sqlite3.IntegrityError:
-        pass  # 已存在就不重複新增
-    conn.close()
+        return False
+    finally:
+        conn.close()
 
-# --- 初始化資料庫和預設 admin 帳號 ---
+def user_exists(username):
+    conn = sqlite3.connect("users.db")
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM users WHERE username = ?", (username,))
+    exists = c.fetchone() is not None
+    conn.close()
+    return exists
+
+# 初始化資料庫與預設管理員帳號
 init_db()
 add_user("admin", "123456", "管理員")
 
-# --- 登入頁面 ---
+# ======================
+# 登入頁面
+# ======================
 def login_page():
     st.title("🔒 登入系統")
     username = st.text_input("帳號")
@@ -64,27 +74,58 @@ def login_page():
         else:
             st.error("帳號或密碼錯誤。")
 
-# --- 登出邏輯 ---
+# ======================
+# 管理員新增帳號頁面
+# ======================
+def register_page():
+    st.header("👤 新增使用者（限管理員）")
+    new_username = st.text_input("新帳號")
+    new_password = st.text_input("新密碼", type="password")
+    new_role = st.selectbox("角色", ["一般使用者", "管理員"])
+    if st.button("新增使用者"):
+        if user_exists(new_username):
+            st.warning("此帳號已存在！")
+        elif not new_username or not new_password:
+            st.warning("請填寫帳號及密碼。")
+        else:
+            ok = add_user(new_username, new_password, new_role)
+            if ok:
+                st.success(f"已成功新增使用者：{new_username}（{new_role}）")
+            else:
+                st.error("新增失敗，請重試。")
+
+# ======================
+# 登出功能
+# ======================
 def logout_button():
-    if st.button("登出"):
+    if st.button("登出", key="logout"):
         st.session_state["authenticated"] = False
         st.experimental_rerun()
 
-# --- 權限檢查&內容顯示 ---
+# ======================
+# 權限檢查流程
+# ======================
 if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
     login_page()
     st.stop()
 
-# --- 登入後顯示主控面板（可加入你的原頁面內容） ---
+# 登入後 sidebar 顯示使用者身分, 登出, 管理員啟動新增帳戶頁
 st.sidebar.write(f"👋 您好，{st.session_state['username']}（{st.session_state['role']}）")
 logout_button()
 
-# --- 原本主控面板頁面內容放在這裡 ---
-st.set_page_config(page_title="設備管理主控面板", layout="wide")
+if st.session_state.get("role", "") == "管理員":
+    st.sidebar.subheader("🛡️ 管理功能")
+    show_register = st.sidebar.checkbox("新增使用者")
+    if show_register:
+        register_page()
 
+# ======================
+# 主控面板頁面內容 （登入後才會進入）
+# ======================
+st.set_page_config(page_title="設備管理主控面板", layout="wide")
 st.title("🧭 設備管理主控面板")
 st.markdown("請選擇下列功能進入各模組頁面。")
-# ...（頁面內容依你的原檔案繼續寫）
+# ...把你的原分頁連結按鈕、模組內容放在這裡
 
 st.markdown("---")
 
