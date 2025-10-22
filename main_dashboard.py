@@ -1,170 +1,138 @@
-# main_dashboard.py
-
 import streamlit as st
-import time
-from firebase_init import get_firestore_client
-import firebase_admin
+import streamlit_authenticator as stauth
+import yaml
+from yaml.loader import SafeLoader
 
-# 頁面配置
 st.set_page_config(page_title="🧭 設備管理主控面板", layout="wide")
 
-# ----------------------------------------
-# 注入美化 CSS (讓按鈕和頁面更好看)
-# ----------------------------------------
-st.markdown("""
-<style>
-/* Streamlit 主標題樣式 */
-.st-emotion-cache-1j02r3h h1 {
-    color: #1f77b4; /* 藍色 */
-    font-weight: 700;
-}
-
-/* 讓 Streamlit 按鈕看起來像卡片 */
-.st-emotion-cache-1f87530 a, .st-emotion-cache-1f87530 button {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 15px 10px;
-    border-radius: 12px;
-    box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease-in-out;
-    background-color: #ffffff; /* 淺色背景 */
-    color: #333333 !important;
-    font-weight: 600;
-    font-size: 16px;
-    height: 100%; /* 確保容器內高度一致 */
-}
-
-/* Hover 效果 */
-.st-emotion-cache-1f87530 a:hover, .st-emotion-cache-1f87530 button:hover {
-    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.2);
-    transform: translateY(-2px);
-    border-color: #1f77b4;
-    background-color: #e6f0ff; /* 淺藍色背景 */
-}
-
-/* 讓頁面內容更居中 */
-.block-container {
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-}
-
-/* 核心模組（大按鈕）的特殊樣式 */
-.core-module .st-emotion-cache-1f87530 a, .core-module .st-emotion-cache-1f87530 button {
-    background-color: #d1e7f9; /* 更深的藍色調 */
-    color: #1f77b4 !important;
-    padding: 25px 15px;
-    font-size: 18px;
-    font-weight: 700;
-}
-
-.core-module .st-emotion-cache-1f87530 a:hover, .core-module .st-emotion-cache-1f87530 button:hover {
-    background-color: #a0cff0;
-}
-
-/* 調整 sidebar success 訊息的樣式 */
-.st-emotion-cache-6qob1r .st-emotion-cache-1ky9w80 {
-    font-size: 16px;
-    font-weight: 600;
-    padding: 10px;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-# ----------------------------------------
-# 🔐 登入檢查與 Firebase 初始化
-# ----------------------------------------
-
-# 檢查登入狀態
-if "user" not in st.session_state:
-    st.warning("⚠️ 請先登入才能使用系統")
-    # 注意：假設 login.py 檔案在 pages/ 資料夾內
-    st.page_link("pages/login.py", label="🔐 前往登入頁面", icon="🔑")
-    st.stop()
-
-# 獲取 Firestore 客戶端 (使用快取，包含錯誤診斷)
+# --- 1. CONFIG & AUTHENTICATOR SETUP ---
 try:
-    db = get_firestore_client()
-except firebase_admin.exceptions.AppError:
-    # 錯誤訊息會在 firebase_init.py 中顯示，這裡只需停止運行
-    st.stop()
-except Exception:
-    # 如果 firebase_init.py 停止了但狀態沒更新
-    st.stop()
+    # 嘗試載入 config.yaml
+    with open('config.yaml') as file:
+        config = yaml.load(file, Loader=SafeLoader)
+except FileNotFoundError:
+    st.error("❌ 找不到 'config.yaml' 文件。請確認已將 config.yaml 放置在專案根目錄。")
+    st.stop() # 停止執行以防錯誤
 
-# 👤 顯示登入者資訊
-user = st.session_state["user"]
-st.sidebar.success(f"👤 登入者：{user['name']} ({user['email']})")
-st.sidebar.caption(f"權限：{user['role']}")
+# 實例化 Authenticator
+authenticator = stauth.Authenticate(
+    config['credentials'],
+    config['cookie']['cookie_name'],
+    config['cookie']['cookie_secret'],
+    config['cookie']['expiry_days'],
+    config['pre-authorized']
+)
 
-# 🚪 登出按鈕
-if st.sidebar.button("🚪 登出", use_container_width=True):
-    st.session_state.clear()
-    st.success("🚪 您已登出。")
-    time.sleep(0.5)
-    # 導向登入頁面
-    st.switch_page("pages/login.py")
+# --- 2. AUTHENTICATION ---
+# 在側邊欄顯示登入表單
+name, authentication_status, username = authenticator.login('Login', 'sidebar')
+
+# 2a. 處理驗證狀態
+if authentication_status is False:
+    st.sidebar.error("使用者名稱/密碼錯誤")
+    st.warning("⚠️ 請先登入才能使用系統")
+    st.stop() # 停止顯示主頁內容
+
+elif authentication_status is None:
+    st.warning("⚠️ 請先登入才能使用系統")
+    st.stop() # 停止顯示主頁內容
+
+elif authentication_status is True:
+    # --- 使用者已成功登入 (authentication_status == True) ---
+
+    # 3. 側邊欄：顯示使用者資訊和登出按鈕
+    st.sidebar.success(f"👤 歡迎, {name}!")
+    authenticator.logout('🚪 登出', 'sidebar')
+    
+    # 4. 頁面自訂樣式 (美化 CSS)
+    st.markdown("""
+        <style>
+        /* 隱藏預設 Streamlit 頁面鏈接的箭頭 */
+        a[data-testid="stPageLink"] > div > svg {
+            display: none !important;
+        }
+        /* 主控面板標題 */
+        h1 {
+            color: #007BFF;
+            font-weight: 700;
+        }
+        /* 模組按鈕容器 */
+        div.stButton > button {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            font-size: 18px;
+            height: 80px;
+            text-align: left;
+            padding-left: 20px;
+            width: 100%;
+        }
+        /* 核心模組按鈕樣式 */
+        .core-button-container div.stButton > button {
+            background-color: #007BFF; /* 藍色背景 */
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        /* 核心模組 hover 效果 */
+        .core-button-container div.stButton > button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+        }
+        /* 其他模組按鈕樣式 */
+        .other-button-container div.stButton > button {
+            background-color: #f0f2f6; /* 淺灰色背景 */
+            color: #333;
+            font-size: 16px;
+        }
+        /* 其他模組 hover 效果 */
+        .other-button-container div.stButton > button:hover {
+            background-color: #e2e4e8;
+            transform: translateY(-1px);
+        }
+        </style>
+        """, unsafe_allow_html=True)
 
 
-# ----------------------------------------
-# 🧭 主控面板內容
-# ----------------------------------------
+    # 5. 主控面板內容
+    st.title("🧭 設備管理主控面板")
+    st.markdown("---")
 
-st.title("🧭 設備管理主控面板")
-st.markdown("### 歡迎回來，請選擇功能模組。")
-st.markdown("---")
+    # 🔷 核心系統模組（最大按鈕）
+    st.header("核心系統模組")
+    st.markdown("處理日常核心業務流程。")
+    st.markdown('<div class="core-button-container">', unsafe_allow_html=True)
+    col_db1, col_db2 = st.columns([1, 1])
+    with col_db1:
+        st.page_link("pages/equipment_system.py", label="📋 設備請購維修系統", icon=" ", use_container_width=True)
+    with col_db2:
+        st.page_link("pages/maintenance_log.py", label="🧾 設備檢修保養履歷", icon=" ", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# --------------------
-# 區塊一：核心系統 (使用美化CSS中的 core-module 類別)
-# --------------------
-st.markdown("### 🔷 核心系統模組", unsafe_allow_html=True)
-st.markdown('<div class="core-module">', unsafe_allow_html=True)
-col_core1, col_core2 = st.columns(2)
-with col_core1:
-    st.page_link("pages/equipment_system.py", label="設備請購維修系統", icon="📋", use_container_width=True)
-with col_core2:
-    st.page_link("pages/maintenance_log.py", label="設備檢修保養履歷", icon="🧾", use_container_width=True)
-st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("---")
 
-st.markdown("---")
+    # 🔹 資料管理與報表模組
+    st.header("資料管理與報表")
+    st.markdown('<div class="other-button-container">', unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
 
-# --------------------
-# 區塊二：資料管理與檢視
-# --------------------
-st.markdown("### 🔹 資料管理與檢視", unsafe_allow_html=True)
-col_data1, col_data2, col_data3 = st.columns(3)
+    with col1:
+        st.page_link("pages/new_equipment.py", label="🆕 新增設備", icon=" ")
+        st.page_link("pages/add_event.py", label="🆕 新增保養事件", icon=" ")
+        st.page_link("pages/edit_data.py", label="✏️ 編輯設備資料", icon=" ")
+        st.page_link("pages/report_abnormal.py", label="📸 設備異常回報系統", icon=" ")
+        st.page_link("pages/export_abnormal.py", label="📤 匯出異常報告", icon=" ")
 
-with col_data1:
-    st.page_link("pages/new_equipment.py", label="新增設備資料", icon="🆕", use_container_width=True)
-    st.page_link("pages/add_event.py", label="新增保養事件", icon="📅", use_container_width=True)
 
-with col_data2:
-    st.page_link("pages/view_main_equipment.py", label="主設備資料總覽", icon="🔍", use_container_width=True)
-    st.page_link("pages/view_maintenance_log.py", label="保養履歷資料總覽", icon="📑", use_container_width=True)
-
-with col_data3:
-    st.page_link("pages/edit_data.py", label="編輯設備資料", icon="✏️", use_container_width=True)
-    st.page_link("pages/delete_data.py", label="刪除設備資料", icon="🗑️", use_container_width=True)
-
-st.markdown("---")
-
-# --------------------
-# 區塊三：異常回報與報告
-# --------------------
-st.markdown("### ⚙️ 異常回報與報告", unsafe_allow_html=True)
-col_report1, col_report2, col_report3 = st.columns(3)
-
-with col_report1:
-    st.page_link("pages/report_abnormal.py", label="設備異常回報系統", icon="📸", use_container_width=True)
-
-with col_report2:
-    st.page_link("pages/abnormal_overview.py", label="異常紀錄總覽", icon="📋", use_container_width=True)
-
-with col_report3:
-    st.page_link("pages/export_abnormal.py", label="匯出異常報告", icon="📤", use_container_width=True)
-
-st.markdown("---")
-st.caption("© 海運組油氣處理課 - 設備管理系統")
+    with col2:
+        st.page_link("pages/view_main_equipment.py", label="🔍 主設備資料總覽", icon=" ")
+        st.page_link("pages/view_maintenance_log.py", label="🔍 保養履歷資料總覽", icon=" ")
+        st.page_link("pages/abnormal_overview.py", label="📋 異常紀錄總覽", icon=" ")
+        st.page_link("pages/delete_data.py", label="🗑️ 刪除設備資料", icon=" ")
+        st.page_link("pages/guide.py", label="📘 使用者手冊", icon=" ")
+        
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.markdown("---")
+    st.caption("海運組油氣處理課")
