@@ -1,4 +1,4 @@
-# main_dashboard.py - 使用 Streamlit Authenticator 的設備管理主控面板（修正版，主頁面登入）
+# main_dashboard.py - 使用 Streamlit Authenticator 的設備管理主控面板（最終修正版，處理返回值）
 
 import streamlit as st
 import streamlit_authenticator as stauth
@@ -39,20 +39,20 @@ authenticator = stauth.Authenticate(
 # --- 4. 登入 UI（主頁面） ---
 st.title("🔐 使用者登入")
 
-# 修正 1: 直接呼叫 login() 即可。Authenticator 會自動將結果寫入 st.session_state，
-# 並且在後續的 st.session_state.get("authentication_status") 檢查中讀取這些值。
-# 不再需要將返回值賦予 name, authentication_status, username 區域變數，避免潛在的 TypeError。
-authenticator.login('🔑 登入系統', location='main') 
+# 修正：再次接收返回值，這是最穩定的做法，能確保 Streamlit Authenticator 在任何狀態下都不會拋出 TypeError。
+# 區域變數 (name, authentication_status, username) 會在每次腳本運行時更新。
+name, authentication_status, username = authenticator.login('🔑 登入系統', location='main') 
 
-# --- 5. 處理登入狀態 (完全依賴 st.session_state) ---
+# --- 5. 處理登入狀態 (依賴區域變數) ---
 
-# 檢查 st.session_state 中 authentication_status 的值
-if st.session_state.get("authentication_status"):
+if authentication_status is False:
+    st.error("❌ 用戶名或密碼錯誤")
+    st.warning("⚠️ 請檢查用戶名和密碼後重試")
+elif authentication_status is None:
+    st.info("👆 請輸入用戶名和密碼，然後按「🔑 登入系統」")
+elif authentication_status:
     # 成功登入
-    # 修正 2: 從 st.session_state 中獲取 name 和 username
-    name = st.session_state['name']
-    username = st.session_state['username']
-    
+    # 這裡我們使用 login() 返回的 name 和 username
     st.sidebar.success(f"✅ 已登入：{name} ({username})")
     authenticator.logout('🚪 登出', 'sidebar', key='logout_button')
 
@@ -111,9 +111,3 @@ if st.session_state.get("authentication_status"):
 
     st.markdown("---")
     st.caption("海運組油氣處理課")
-
-elif st.session_state.get("authentication_status") is False:
-    st.error("❌ 用戶名或密碼錯誤")
-    st.warning("⚠️ 請檢查用戶名和密碼後重試")
-elif st.session_state.get("authentication_status") is None:
-    st.info("👆 請輸入用戶名和密碼，然後按「🔑 登入系統」")
