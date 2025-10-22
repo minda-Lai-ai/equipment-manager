@@ -142,19 +142,15 @@ st.markdown("---")
 col1, col2 = st.columns(2)
 
 with col1:
-if st.session_state.get("authenticated", False):
-    st.page_link("pages/equipment_system.py", label="設備請購維修系統", icon="📋", use_container_width=True)
-    st.page_link("pages/maintenance_log.py", label="設備檢修保養履歷", icon="🧾", use_container_width=True)
-    st.page_link("pages/edit_data.py", label="編輯設備資料", icon="✏️", use_container_width=True)
-    st.page_link("pages/add_event.py", label="新增保養事件", icon="🆕", use_container_width=True)
-    st.page_link("pages/new_equipment.py", label="新增設備", icon="🆕", use_container_width=True)
-    st.page_link("pages/view_main_equipment.py", label="主設備資料總覽", icon="🔍", use_container_width=True)
-    st.page_link("pages/view_maintenance_log.py", label="保養履歷資料總覽", icon="🔍", use_container_width=True)
-    st.page_link("pages/report_abnormal.py", label="設備異常回報系統", icon="📸", use_container_width=True)
-    st.page_link("pages/export_abnormal.py", label="匯出異常報告", icon="📤", use_container_width=True)
-else:
-    st.warning("請先登入才能使用各項功能頁面。")
-    
+    st.page_link("pages/edit_data.py", label="編輯設備資料", icon="✏️")
+    st.page_link("pages/add_event.py", label="新增保養事件", icon="🆕")
+    st.page_link("pages/new_equipment.py", label="新增設備", icon="🆕")
+    st.page_link("pages/view_main_equipment.py", label="主設備資料總覽", icon="🔍")
+    st.page_link("pages/view_maintenance_log.py", label="保養履歷資料總覽", icon="🔍")
+    st.page_link("pages/report_abnormal.py", label="設備異常回報系統", icon="📸")
+    st.page_link("pages/export_abnormal.py", label="匯出異常報告", icon="📤")
+
+
 with col2:
     st.page_link("pages/view_data.py", label="瀏覽資料庫內容", icon="🔍")
     st.page_link("pages/equipment_detail.py", label="設備詳細資料", icon="🔍")
