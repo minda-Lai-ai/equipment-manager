@@ -1,7 +1,7 @@
 credentials:
-  usernames:
+  usernames:  # 這一行絕對不能少！
     test_user:
-      email: test@company.com
+      email: test@example.com
       name: 測試用戶
       # 密碼 '123456' 的雜湊值 (使用 bcrypt)
       password: $2b$12$Nq1QeQ0k6mE0lV6hY4n.4eL4p7c5mR5jM9l1R7aR2o8yS6n7k8b9w
