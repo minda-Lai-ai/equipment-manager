@@ -126,3 +126,4 @@ elif authentication_status:
     st.markdown("---")
     st.caption("海運組油氣處理課")
 
+# 2025-10-22 這是用於強制 Streamlit Cloud 重新部署的變更
