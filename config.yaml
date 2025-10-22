@@ -1,20 +1,20 @@
+# config.yaml 檔案內容 (Streamlit Authenticator 配置)
+# 請將此內容儲存在您的專案根目錄下的 config.yaml 檔案中。
+
+cookie:
+  expiry_days: 30
+  key: random_signature_key_for_cookie
+  name: equipment_app_cookie
+
 credentials:
-  usernames:  # 這一行絕對不能少！
-    test_user:
-      email: test@example.com
-      name: 測試用戶
-      # 密碼 '123456' 的雜湊值 (使用 bcrypt)
-      password: $2b$12$Nq1QeQ0k6mE0lV6hY4n.4eL4p7c5mR5jM9l1R7aR2o8yS6n7k8b9w
+  usernames:
     admin:
       email: admin@company.com
       name: 系統管理員
-      # 密碼 'secure_admin' 的雜湊值
-      password: $2b$12$KkQeE0M1lV6hY4n.4eL4p7c5mR5jM9l1R7aR2o8yS6n7k8b9w
-cookie:
-  # 建議在生產環境中設置一個複雜的 cookie_secret
-  cookie_name: equipment_manager_app
-  cookie_secret: your_super_secret_key
-  expiry_days: 30
-pre-authorized:
-  emails:
-    - preauth@company.com
+      password: $2b$12$R.S9d/Q1VvB2K8W7S7y/qON.wL7jE5X9K/t9eY0OQG.Q4/t6Xg/U.
+    test_user:
+      email: test@example.com
+      name: 測試用戶
+      password: $2b$12$R.S9d/Q1VvB2K8W7S7y/qON.wL7jE5X9K/t9eY0OQG.Q4/t6Xg/U.
+
+# 注意：上面的密碼是 hash 過的，對應的明文密碼 (Password) 都是 123456。
