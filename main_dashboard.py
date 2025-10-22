@@ -1,4 +1,4 @@
-# main_dashboard.py - 使用 Streamlit Authenticator 的設備管理主控面板（最終修正版，處理返回值）
+# main_dashboard.py - 使用 Streamlit Authenticator 的設備管理主控面板（最終、最穩健版本）
 
 import streamlit as st
 import streamlit_authenticator as stauth
@@ -13,10 +13,9 @@ try:
     with open('config.yaml') as file:
         config = yaml.load(file, Loader=SafeLoader)
     
-    if (not isinstance(config, dict) or 
-        'cookie' not in config or 
-        'credentials' not in config or
-        'usernames' not in config['credentials']):
+    # 載入錯誤檢查
+    required_keys = ['cookie', 'credentials']
+    if not isinstance(config, dict) or not all(key in config for key in required_keys):
         st.error("⚠️ config.yaml 載入結構錯誤：缺少 'cookie' 或 'credentials' 區塊！")
         st.stop()
         
@@ -27,20 +26,36 @@ except Exception as e:
     st.error(f"⚠️ 載入 config.yaml 時發生錯誤：{e}")
     st.stop()
 
+# --- *** 檢查版本資訊 (FOR DEBUG) *** ---
+st.sidebar.caption(f"Streamlit 版本: {st.__version__}")
+try:
+    st.sidebar.caption(f"Authenticator 版本: {stauth.__version__}")
+except AttributeError:
+    st.sidebar.caption("Authenticator 版本: (未找到)")
+# --- ********************************* ---
+
 # --- 3. 初始化 Authenticator ---
 cookie_config = config.get('cookie', {})
-authenticator = stauth.Authenticate(
-    config['credentials'],
-    cookie_config['name'],
-    cookie_config['key'],
-    cookie_config['expiry_days']
-)
+
+# *** 核心修正區域：驗證 Authenticator 的初始化參數 ***
+# 確保所有參數都是有效值，如果缺失則給予合理的預設值或報錯
+try:
+    authenticator = stauth.Authenticate(
+        config['credentials'],
+        # 確保 'name' 和 'key' 存在且為字串
+        cookie_config.get('name', 'default_cookie'),
+        cookie_config.get('key', 'default_secret_key'),
+        # 確保 'expiry_days' 存在且為數字
+        cookie_config.get('expiry_days', 30)
+    )
+except Exception as e:
+    st.error(f"⚠️ Authenticator 初始化失敗，請檢查 config.yaml 中的 credentials 或 cookie 欄位: {e}")
+    st.stop()
 
 # --- 4. 登入 UI（主頁面） ---
 st.title("🔐 使用者登入")
 
-# 修正：再次接收返回值，這是最穩定的做法，能確保 Streamlit Authenticator 在任何狀態下都不會拋出 TypeError。
-# 區域變數 (name, authentication_status, username) 會在每次腳本運行時更新。
+# 接收返回值，這是最穩定的做法
 name, authentication_status, username = authenticator.login('🔑 登入系統', location='main') 
 
 # --- 5. 處理登入狀態 (依賴區域變數) ---
@@ -52,7 +67,6 @@ elif authentication_status is None:
     st.info("👆 請輸入用戶名和密碼，然後按「🔑 登入系統」")
 elif authentication_status:
     # 成功登入
-    # 這裡我們使用 login() 返回的 name 和 username
     st.sidebar.success(f"✅ 已登入：{name} ({username})")
     authenticator.logout('🚪 登出', 'sidebar', key='logout_button')
 
@@ -111,3 +125,4 @@ elif authentication_status:
 
     st.markdown("---")
     st.caption("海運組油氣處理課")
+
