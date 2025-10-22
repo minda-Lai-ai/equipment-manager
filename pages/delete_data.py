@@ -1,4 +1,9 @@
 import streamlit as st
+
+if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
+    st.error("尚未登入或權限不足，請由主畫面登入後再瀏覽此頁。")
+    st.stop()
+
 import pandas as pd
 from modules.four_level_selector import four_level_selector
 from datetime import datetime
