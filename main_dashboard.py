@@ -2,6 +2,16 @@ import streamlit as st
 import sqlite3
 import hashlib
 
+st.set_page_config(page_title="設備管理主控面板", layout="wide", initial_sidebar_state="expanded", page_icon="🧭", menu_items=None)
+st.markdown(
+    """
+    <style>
+    section[data-testid="stSidebarNav"] {display: none;}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # --- 資料庫與認證函數 ---
 def init_db():
     conn = sqlite3.connect("users.db")
