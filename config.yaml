@@ -1,0 +1,20 @@
+credentials:
+  usernames:
+    test_user:
+      email: test@company.com
+      name: 測試用戶
+      # 密碼 '123456' 的雜湊值 (使用 bcrypt)
+      password: $2b$12$Nq1QeQ0k6mE0lV6hY4n.4eL4p7c5mR5jM9l1R7aR2o8yS6n7k8b9w
+    admin:
+      email: admin@company.com
+      name: 系統管理員
+      # 密碼 'secure_admin' 的雜湊值
+      password: $2b$12$KkQeE0M1lV6hY4n.4eL4p7c5mR5jM9l1R7aR2o8yS6n7k8b9w
+cookie:
+  # 建議在生產環境中設置一個複雜的 cookie_secret
+  cookie_name: equipment_manager_app
+  cookie_secret: your_super_secret_key
+  expiry_days: 30
+pre-authorized:
+  emails:
+    - preauth@company.com
