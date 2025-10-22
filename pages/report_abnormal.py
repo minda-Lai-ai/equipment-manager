@@ -1,8 +1,6 @@
 import streamlit as st
 import pandas as pd
 import os
-from firebase_init import get_firestore
-db = get_firestore()
 from datetime import datetime
 from PIL import Image
 
