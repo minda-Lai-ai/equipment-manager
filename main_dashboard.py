@@ -64,14 +64,14 @@ def login_page():
     password = st.text_input("密碼", type="password")
     if st.button("登入"):
         valid, role = verify_user(username, password)
-    if valid:
-        st.session_state["authenticated"] = True
-        st.session_state["username"] = username
-        st.session_state["role"] = role
-        st.experimental_rerun()   # 登入立即刷新，只需按一次
-    else:
-        st.error("帳號或密碼錯誤。")
-
+        if valid:
+            st.session_state["authenticated"] = True
+            st.session_state["username"] = username
+            st.session_state["role"] = role
+            st.experimental_rerun()   # 登入立即刷新，只需按一次
+        else:
+            st.error("帳號或密碼錯誤。")
+ 
 # --- 管理員新增帳號頁面 ---
 def register_page():
     st.header("👤 新增使用者（限管理員）")
