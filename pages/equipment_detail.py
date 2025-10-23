@@ -69,9 +69,7 @@ for col in row.index:
 st.markdown("---")
 
 # 編輯按鈕（正確跳分頁）
-st.download_button(
 st.page_link("pages/edit_data.py", label="✏️ 編輯此設備 ✏️✏️", icon="✏️")
-)
     
 # 儲存為 CSV 檔供下載
 csv_data_bom = '\ufeff' + row_df.to_csv(index=False)
