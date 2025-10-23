@@ -3,3 +3,4 @@ Pillow
 firebase-admin
 fpdf
 pyyaml
+matplotlib openpyxl
