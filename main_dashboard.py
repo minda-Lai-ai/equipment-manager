@@ -143,8 +143,8 @@ if st.session_state["role"] == "管理員":
         st.stop()
 
 # --- 僅管理員能管理使用者權限 ---
-    if st.session_state.get("role") == "管理員":
-        st.sidebar.page_link("pages/admin_manage.py", label="帳號管理", icon="🛡️")
+if st.session_state.get("role") == "管理員":
+    st.sidebar.page_link("pages/admin_manage.py", label="帳號管理", icon="🛡️")
 
 
 # ==============================
