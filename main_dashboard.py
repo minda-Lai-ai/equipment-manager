@@ -10,7 +10,7 @@ st.set_page_config(
     initial_sidebar_state="auto" 
 )
 
-# --- 自定義 CSS 樣式 (視覺美化與響應式卡片) ---
+# --- 自定義 CSS 樣式 (視覺美化、響應式卡片與側邊欄控制) ---
 st.markdown(
     """
     <style>
@@ -20,11 +20,14 @@ st.markdown(
         font-family: 'Noto Sans TC', sans-serif;
     }
 
-    /* 隱藏 Streamlit 自動生成的頁面連結 (解決英文/多餘連結問題) */
-    [data-testid="stSidebarNav"] li:nth-child(n+2) {
-        display: none;
+    /* === 側邊欄控制修正 START === */
+    /* 隱藏 Streamlit 自動生成的頁面導航列表 (解決英文/多餘連結問題) */
+    /* 這樣我們就可以完全控制側邊欄的內容 */
+    [data-testid="stSidebarNav"] {
+        display: none !important;
     }
-    
+    /* === 側邊欄控制修正 END === */
+
     /* 主標題樣式 */
     h1 {
         font-weight: 700;
@@ -98,7 +101,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
 # --- 資料庫與認證函數 ---
 def init_db():
     conn = sqlite3.connect("users.db")
@@ -170,7 +172,7 @@ def login_page():
     username = st.text_input("帳號")
     password = st.text_input("密碼", type="password")
     
-    # 修正登入機制：使用表單確保按鈕只運行一次且狀態更新後立即重跑
+    # 使用 st.form 確保按鈕只運行一次且狀態更新後立即重跑 (避免雙擊問題)
     with st.form("login_form"):
         submitted = st.form_submit_button("登入")
         if submitted:
@@ -183,6 +185,8 @@ def login_page():
                 st.experimental_rerun()
             else:
                 st.error("❌ 帳號或密碼錯誤。")
+    st.markdown("---")
+    st.info("💡 預設帳號: admin / 密碼: 123456")
 
 # --- 管理員新增帳號頁面 ---
 def register_page():
@@ -231,6 +235,8 @@ def change_password_page():
                 st.error("❌ 舊密碼不正確。")
             elif new_pw != confirm_pw:
                 st.warning("⚠️ 兩次新密碼不一致。")
+            elif len(new_pw) < 6:
+                st.warning("⚠️ 新密碼長度需大於 6 個字元。")
             else:
                 c.execute("UPDATE users SET password_hash=? WHERE username=?",
                         (hash_password(new_pw), st.session_state["username"]))
@@ -238,45 +244,77 @@ def change_password_page():
                 conn.close()
                 st.success("✅ 密碼更新成功！")
                 st.info("下次登入請使用新密碼。")
-                
-                # 登出並強制使用者使用新密碼重新登入
                 logout() 
 
 # --- 權限檢查與登入流程 ---
 if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
-    # 檢查是否有切換到管理頁面的旗標，並確保登出後回到登入頁
-    if st.session_state.get("page") == "register" or st.session_state.get("page") == "change_pw":
-        st.session_state["page"] = "login"
+    # 未登入時顯示登入頁面
     login_page()
     st.stop() # 停止執行後續的主控面板內容
 
 # --- 側邊欄：登入者資訊與功能按鈕 (極度簡化) ---
-st.sidebar.markdown(f"#### 歡迎回來！")
-st.sidebar.markdown(f"**👤 帳號:** `{st.session_state['username']}`")
-st.sidebar.markdown(f"**🧩 角色:** `{st.session_state['role']}`")
+st.sidebar.markdown(f"#### 👤 登入資訊")
+st.sidebar.markdown(f"**帳號:** `{st.session_state['username']}`")
+st.sidebar.markdown(f"**角色:** `{st.session_state['role']}`")
 st.sidebar.markdown("---")
 
-# 管理功能按鈕 (僅限管理員)
+# 設置頁面切換旗標的預設值
+if "page" not in st.session_state:
+    st.session_state["page"] = "dashboard"
+
+# 側邊欄功能區 - 使用者管理
 if st.session_state["role"] == "管理員":
     if st.sidebar.button("➕ 管理使用者帳號", key="btn_register"):
         st.session_state["page"] = "register"
         st.experimental_rerun()
     st.sidebar.markdown("---")
 
-# 其他使用者功能
+# 側邊欄功能區 - 帳號設定
 if st.sidebar.button("🛠 修改密碼", key="btn_change_pw"):
     st.session_state["page"] = "change_pw"
     st.experimental_rerun()
     
+# 側邊欄功能區 - 登出
 st.sidebar.button("🚪 登出", on_click=logout, key="btn_logout")
 
-# --- 主控面板內容路由 (根據側邊欄按鈕切換頁面) ---
+st.sidebar.markdown("---")
+
+# 側邊欄功能導覽 (手動添加的中文連結，並用 st.sidebar.markdown 分組)
+
+# 確保點擊左側管理功能後能回到主控面板
+if st.sidebar.button("🏠 主控面板", key="btn_dashboard"):
+    st.session_state["page"] = "dashboard"
+    st.experimental_rerun()
+
+st.sidebar.markdown("##### ⚙️ 核心系統")
+st.sidebar.page_link("pages/equipment_system.py", label="設備請購維修系統", icon="📋")
+st.sidebar.page_link("pages/maintenance_log.py", label="設備檢修保養履歷", icon="🧾")
+st.sidebar.markdown("---")
+
+st.sidebar.markdown("##### 💾 資料管理")
+st.sidebar.page_link("pages/new_equipment.py", label="🆕 新增設備", icon="🆕")
+st.sidebar.page_link("pages/add_event.py", label="🛠️ 新增保養事件", icon="🛠️")
+st.sidebar.page_link("pages/view_main_equipment.py", label="🔍 主設備資料總覽", icon="🔍")
+st.sidebar.page_link("pages/view_maintenance_log.py", label="📜 保養履歷總覽", icon="📜")
+st.sidebar.markdown("---")
+
+st.sidebar.markdown("##### 📊 報表與輔助")
+st.sidebar.page_link("pages/report_abnormal.py", label="📸 設備異常回報", icon="📸")
+st.sidebar.page_link("pages/abnormal_overview.py", label="📋 異常紀錄總覽", icon="📋")
+st.sidebar.page_link("pages/guide.py", label="📘 使用者手冊", icon="📘")
+
+
+# ==============================
+# 主畫面內容路由
+# ==============================
 current_page = st.session_state.get("page", "dashboard")
 
 if current_page == "register" and st.session_state["role"] == "管理員":
     register_page()
+    st.caption("👈 點擊左側 '主控面板' 返回主畫面")
 elif current_page == "change_pw":
     change_password_page()
+    st.caption("👈 點擊左側 '主控面板' 返回主畫面")
 else:
     # --- 頁面標題 ---
     st.title("🧭 設備管理主控面板")
@@ -306,7 +344,7 @@ else:
         st.page_link("pages/view_main_equipment.py", label="🔍 主設備資料總覽", icon="🔍", use_container_width=True)
         st.page_link("pages/view_maintenance_log.py", label="📜 保養履歷總覽", icon="📜", use_container_width=True)
 
-    # 連結分組：編輯與刪除
+    # 連結分組：編輯與刪除 (需要權限的操作)
     with col2:
         st.subheader("編輯與管理")
         st.page_link("pages/edit_data.py", label="✏️ 編輯設備資料", icon="✏️", use_container_width=True)
