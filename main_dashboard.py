@@ -268,13 +268,22 @@ st.sidebar.markdown("---")
 if "page" not in st.session_state:
     st.session_state["page"] = "dashboard"
 
-# 側邊欄功能區 - 使用者管理、修改密碼、登出
-st.sidebar.markdown("#### ⚙️ 帳號管理與設定")
-if st.session_state["role"] == "管理員":
-    if st.sidebar.button("➕ 管理使用者帳號", key="btn_register"):
-        st.session_state["page"] = "register"
-        st.experimental_rerun()
+# 核心系統與流程 (兩欄佈局，手機自動堆疊)
+st.header("⚙️ 核心系統與流程")
+col_db1, col_db2 = st.columns(2)
 
+with col_db1:
+    # 應用新的 CSS 類別
+    st.markdown('<div class="large-link-container">', unsafe_allow_html=True)
+    st.page_link("pages/equipment_system.py", label="設備請購維修系統", icon="📋", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+with col_db2:
+    # 應用新的 CSS 類別
+    st.markdown('<div class="large-link-container">', unsafe_allow_html=True)
+    st.page_link("pages/maintenance_log.py", label="設備檢修保養履歷", icon="🧾", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    
 if st.sidebar.button("🛠 修改密碼", key="btn_change_pw"):
     st.session_state["page"] = "change_pw"
     st.experimental_rerun()
