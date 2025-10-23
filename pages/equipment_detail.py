@@ -2,6 +2,25 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 from utils.status_utils import status_light, maintenance_light
+import matplotlib.pyplot as plt
+from matplotlib import font_manager
+
+def equipment_info_image(row):
+    # 設置中文字型（如：Microsoft JhengHei/微軟正黑體、SimHei等必須已安裝）
+    font_path = "/usr/share/fonts/truetype/arphic/ukai.ttc"  # Linux (可換成適用路徑)
+    if not font_manager.findSystemFonts(fontpaths=[font_path]):
+        font_path = None  # 若找不到則不指定
+    plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei','SimHei','Arial Unicode MS'] if not font_path else [font_path]
+    plt.rcParams['axes.unicode_minus'] = False
+    fig, ax = plt.subplots(figsize=(6, len(row.index) * 0.5 + 1))
+    ax.axis('off')
+    text = "\n".join([f"{col}: {row[col]}" for col in row.index])
+    ax.text(0, 1, text, va='top', fontsize=12)
+    buf = BytesIO()
+    plt.savefig(buf, format="png", bbox_inches='tight')
+    plt.close(fig)
+    buf.seek(0)
+    return buf
 
 # 權限檢查
 if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
