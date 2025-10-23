@@ -91,10 +91,6 @@ def register_page():
                 st.error("新增失敗。")
 
 # --- 登出 ---
-    if st.session_state.get("role") == "管理員":
-        st.sidebar.page_link("pages/admin_manage.py", label="帳號管理", icon="🛡️")
-
-# --- 登出 ---
 def logout_button():
     if st.sidebar.button("登出"):
         st.session_state.clear()
@@ -145,6 +141,11 @@ if st.session_state["role"] == "管理員":
     if st.sidebar.checkbox("📋 管理使用者帳號"):
         register_page()
         st.stop()
+
+# --- 僅管理員能管理使用者權限 ---
+    if st.session_state.get("role") == "管理員":
+        st.sidebar.page_link("pages/admin_manage.py", label="帳號管理", icon="🛡️")
+
 
 # ==============================
 # 側邊欄頁面導覽連結（移到最上方）
