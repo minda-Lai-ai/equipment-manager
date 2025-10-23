@@ -49,9 +49,19 @@ for col in row.index:
 
 st.markdown("---")
 
-# 編輯按鈕
-if st.button("✏️ 編輯此設備"):
-    st.switch_page("edit_data.py")
+# 編輯按鈕（正確跳分頁）
+st.page_link("pages/edit_data.py", label="✏️ 編輯此設備", icon="✏️")
+
+# 儲存為Excel（需openpyxl環境）
+excel_buffer = BytesIO()
+row_df.to_excel(excel_buffer, index=False)
+st.download_button(
+    "📊 下載Excel",
+    data=excel_buffer.getvalue(),
+    file_name=f"{selected_id}_設備資料.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
+
 
 # 儲存為 CSV 檔供下載
 csv_data_bom = '\ufeff' + row_df.to_csv(index=False)
