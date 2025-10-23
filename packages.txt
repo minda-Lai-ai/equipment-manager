@@ -1,4 +1,0 @@
-build-essential
-python3-dev
-# 中文字體包 (最可靠的通用字體)
-fonts-noto-cjk
