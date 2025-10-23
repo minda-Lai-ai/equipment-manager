@@ -69,7 +69,7 @@ for col in row.index:
 st.markdown("---")
 
 # 編輯設備（美化主頁按鈕）
-if st.button("✏️ 編輯此設備", use_container_width=True):
+if st.button("✏️ 編輯此設備"):
     st.switch_page("edit_data.py")
 
 # 儲存為Excel（需openpyxl環境）
