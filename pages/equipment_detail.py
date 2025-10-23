@@ -6,16 +6,26 @@ import matplotlib.pyplot as plt
 from matplotlib import font_manager
 
 def equipment_info_image(row):
-    # 設置中文字型（如：Microsoft JhengHei/微軟正黑體、SimHei等必須已安裝）
-    font_path = "/usr/share/fonts/truetype/arphic/ukai.ttc"  # Linux (可換成適用路徑)
-    if not font_manager.findSystemFonts(fontpaths=[font_path]):
-        font_path = None  # 若找不到則不指定
-    plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei','SimHei','Arial Unicode MS'] if not font_path else [font_path]
-    plt.rcParams['axes.unicode_minus'] = False
+    # --- 修正亂碼：優先使用 Streamlit Cloud 支援的中文字體 ---
+    
+    # 1. 嘗試清除 Matplotlib 快取並重新載入字體
+    # 這有助於 Matplotlib 找到新安裝的字體
+    font_manager._rebuild() 
+
+    # 2. 設置中文字型：優先使用 Noto Sans CJK TC (思源黑體)
+    # 這是 Linux 環境中最可靠的通用中文字體
+    plt.rcParams['font.sans-serif'] = ['Noto Sans CJK TC', 'Microsoft JhengHei', 'SimHei', 'Arial Unicode MS']
+    plt.rcParams['axes.unicode_minus'] = False # 正常顯示負號
+    
     fig, ax = plt.subplots(figsize=(6, len(row.index) * 0.5 + 1))
     ax.axis('off')
+    
+    # 格式化資料文字
     text = "\n".join([f"{col}: {row[col]}" for col in row.index])
-    ax.text(0, 1, text, va='top', fontsize=12)
+    
+    # 繪製文字
+    ax.text(0, 1, text, va='top', fontsize=12) 
+    
     buf = BytesIO()
     plt.savefig(buf, format="png", bbox_inches='tight')
     plt.close(fig)
