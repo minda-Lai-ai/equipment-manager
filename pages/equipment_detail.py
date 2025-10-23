@@ -54,10 +54,10 @@ if st.button("✏️ 編輯此設備"):
     st.switch_page("edit_data.py")
 
 # 儲存為 CSV 檔供下載
-csv_data = row_df.to_csv(index=False).encode("utf-8")
+csv_data_bom = '\ufeff' + row_df.to_csv(index=False)
 st.download_button(
-    "💾 下載此設備資料（CSV檔）",
-    data=csv_data,
+    "💾 下載設備CSV（相容Excel）",
+    data=csv_data_bom.encode("utf-8"),
     file_name=f"{selected_id}_設備資料.csv",
     mime="text/csv"
 )
