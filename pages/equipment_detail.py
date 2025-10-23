@@ -49,8 +49,9 @@ for col in row.index:
 
 st.markdown("---")
 
-# 編輯按鈕（正確跳分頁）
-st.page_link("pages/edit_data.py", label="✏️ 編輯此設備", icon="✏️")
+# 編輯設備（美化主頁按鈕）
+if st.button("✏️ 編輯此設備", use_container_width=True):
+    st.switch_page("edit_data.py")
 
 # 儲存為Excel（需openpyxl環境）
 excel_buffer = BytesIO()
@@ -82,8 +83,7 @@ st.download_button(
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
 
-# 圖片儲存按鈕：產生設備資料圖檔供下載
-import matplotlib.pyplot as plt
+# 下載圖片（修正中文亂碼）
 
 def equipment_info_image(row):
     fig, ax = plt.subplots(figsize=(6, len(row.index) * 0.5 + 1))
@@ -97,9 +97,10 @@ def equipment_info_image(row):
     return buf
 
 if st.button("🖼️ 生成設備圖片"):
+# 下載圖片（修正中文亂碼）
     img_bytes = equipment_info_image(row)
     st.download_button(
-        "下載設備資料圖片",
+        "🖼️ 下載設備資料圖片",
         data=img_bytes.getvalue(),
         file_name=f"{selected_id}_設備資料.png",
         mime="image/png"
