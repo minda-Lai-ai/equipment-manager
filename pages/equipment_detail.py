@@ -1,17 +1,17 @@
 import streamlit as st
+import pandas as pd
+from io import BytesIO
+from utils.status_utils import status_light, maintenance_light
 
 # 權限檢查
 if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
     st.error("尚未登入或登入已逾時，請回主畫面重新登入。")
     st.stop()
 
-# 顯示登入者資訊於頁首或側邊欄
+# 顯示登入者資訊
 st.sidebar.markdown("---")
 st.sidebar.write(f"👤 使用者：{st.session_state['username']}")
 st.sidebar.write(f"🧩 角色：{st.session_state['role']}")
-
-import pandas as pd
-from utils.status_utils import status_light, maintenance_light
 
 # 載入資料庫
 df = pd.read_csv("data/main_equipment_system.csv")
@@ -25,16 +25,12 @@ if st.button("🔙 返回主控面板"):
 
 st.markdown("---")
 
-# 取得選定設備編號
 selected_id = st.session_state.get("selected_equipment_id", None)
-
 if not selected_id:
     st.warning("⚠️ 尚未選取設備，請從設備請購維修系統進入")
     st.stop()
 
-# 查詢設備資料
 row_df = df[df["設備請購維修編號"] == selected_id]
-
 if row_df.empty:
     st.error("找不到該設備資料")
     st.stop()
@@ -57,15 +53,46 @@ st.markdown("---")
 if st.button("✏️ 編輯此設備"):
     st.switch_page("edit_data.py")
 
-# 儲存按鈕（重新儲存並備份）
-if st.button("💾 儲存此設備資料"):
-    df.to_csv("data/main_equipment_system.csv", index=False)
-    backup_name = f"data/main_equipment_system_{pd.Timestamp.now().strftime('%Y%m%d')}.csv"
-    df.to_csv(backup_name, index=False)
-    st.success("✅ 資料已儲存並備份")
+# 儲存為 CSV 檔供下載
+csv_data = row_df.to_csv(index=False).encode("utf-8")
+st.download_button(
+    "💾 下載此設備資料（CSV檔）",
+    data=csv_data,
+    file_name=f"{selected_id}_設備資料.csv",
+    mime="text/csv"
+)
 
-# 圖片儲存按鈕
-if st.button("🖼️ 存成圖片"):
-    st.session_state["equipment_snapshot"] = row.to_dict()
-    st.switch_page("export_image.py")
+# 儲存為 Excel 檔供下載
+excel_buffer = BytesIO()
+row_df.to_excel(excel_buffer, index=False)
+st.download_button(
+    "📊 下載此設備資料（Excel檔）",
+    data=excel_buffer.getvalue(),
+    file_name=f"{selected_id}_設備資料.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
 
+# 圖片儲存按鈕：產生設備資料圖檔供下載
+import matplotlib.pyplot as plt
+
+def equipment_info_image(row):
+    fig, ax = plt.subplots(figsize=(6, len(row.index) * 0.5 + 1))
+    ax.axis('off')
+    text = "\n".join([f"{col}: {row[col]}" for col in row.index])
+    ax.text(0, 1, text, va='top', fontsize=12)
+    buf = BytesIO()
+    plt.savefig(buf, format="png", bbox_inches='tight')
+    plt.close(fig)
+    buf.seek(0)
+    return buf
+
+if st.button("🖼️ 生成設備圖片"):
+    img_bytes = equipment_info_image(row)
+    st.download_button(
+        "下載設備資料圖片",
+        data=img_bytes.getvalue(),
+        file_name=f"{selected_id}_設備資料.png",
+        mime="image/png"
+    )
+
+st.markdown("---")
