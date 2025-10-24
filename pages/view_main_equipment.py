@@ -60,7 +60,12 @@ if "下次維修日期" in df_disp.columns:
     df_disp["維修保養提示"] = df_disp["下次維修日期"].apply(maintenance_light)
 
 # ---------- 顯示於頁面 ----------
-st.markdown('<style>td {vertical-align: middle;}</style>', unsafe_allow_html=True)
+st.markdown("""
+<style>
+    table td {white-space: nowrap;}
+</style>
+""", unsafe_allow_html=True)
+
 st.write("（部分欄位已加燈號）")
 st.write(df_disp.to_html(escape=False, index=False), unsafe_allow_html=True)
 
