@@ -1,18 +1,17 @@
 import streamlit as st
+import pandas as pd
+from modules.four_level_selector import four_level_selector
+from datetime import datetime
 
 # 權限檢查
 if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
     st.error("尚未登入或登入已逾時，請回主畫面重新登入。")
     st.stop()
 
-# 顯示登入者資訊於頁首或側邊欄
+# 顯示登入者資訊
 st.sidebar.markdown("---")
 st.sidebar.write(f"👤 使用者：{st.session_state['username']}")
 st.sidebar.write(f"🧩 角色：{st.session_state['role']}")
-
-import pandas as pd
-from modules.four_level_selector import four_level_selector
-from datetime import datetime
 
 st.set_page_config(page_title="✏️ 編輯設備資料", layout="wide")
 st.title("✏️ 編輯設備資料")
@@ -20,11 +19,8 @@ st.title("✏️ 編輯設備資料")
 if st.button("🔙 返回主控面板"):
     st.switch_page("main_dashboard.py")
 
-# 資料路徑
 main_path = "data/main_equipment_system.csv"
 log_path = "data/edit_log.csv"
-
-# 載入資料庫
 main_df = pd.read_csv(main_path)
 
 # 四階選單
@@ -48,8 +44,32 @@ st.markdown("---")
 st.subheader("✏️ 編輯欄位")
 
 with st.form("edit_form"):
+    # 主設備、次設備、設備、設備請購維修編號只做顯示不可更改
+    st.text_input("主設備", value=st.session_state.edit_buffer["主設備"], key="main", disabled=True)
+    st.text_input("次設備", value=st.session_state.edit_buffer["次設備"], key="sub", disabled=True)
+    st.text_input("設備", value=st.session_state.edit_buffer["設備"], key="name", disabled=True)
+    st.text_input("設備請購維修編號", value=st.session_state.edit_buffer["設備請購維修編號"], key="code", disabled=True)
+
+    # 設備狀況只允許on/off/non三選
+    st.session_state.edit_buffer["設備狀況"] = st.selectbox("設備狀況", ["on", "off", "non"], index=["on", "off", "non"].index(str(st.session_state.edit_buffer["設備狀況"]).strip() if str(st.session_state.edit_buffer["設備狀況"]).strip() in ["on", "off", "non"] else 0))
+
+    # 其餘欄位
     for col in original:
-        st.session_state.edit_buffer[col] = st.text_input(f"{col}", value=st.session_state.edit_buffer[col])
+        if col in ["主設備", "次設備", "設備", "設備請購維修編號", "設備狀況"]:
+            continue
+        # 維修提示無法輸入：可以選擇完全不顯示或改為 st.text_input(disabled)
+        if "維修提示" in col:
+            st.text_input(col, value=st.session_state.edit_buffer.get(col, ""), disabled=True)
+            continue
+        # 修改人欄位直接顯示目前登入者，不可更改
+        if ("修改人" in col) or ("填寫人" in col):
+            st.text_input(col, value=st.session_state['username'], disabled=True)
+            st.session_state.edit_buffer[col] = st.session_state['username']
+            continue
+        # 其餘欄位允許編輯，若未填則TBD
+        new_val = st.text_input(col, value=st.session_state.edit_buffer.get(col, "TBD"))
+        st.session_state.edit_buffer[col] = new_val if new_val.strip() else "TBD"
+
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         back = st.form_submit_button("🔙 上一步")
@@ -60,7 +80,6 @@ with st.form("edit_form"):
     with col4:
         save = st.form_submit_button("💾 儲存")
 
-# 操作邏輯
 if reset:
     st.session_state.edit_buffer = st.session_state.original_data.copy()
     st.info("🔄 已復原為原始資料")
@@ -90,9 +109,6 @@ if save:
         st.success(f"✅ 已儲存修改：{st.session_state.edit_buffer.get('設備')}（{st.session_state.edit_buffer.get('設備請購維修編號')}）")
     else:
         st.error("❌ 找不到對應設備編號，無法儲存")
-
-    main_df.to_csv(main_path, index=False)
-    st.success(f"✅ 已儲存修改：{st.session_state.edit_buffer.get('設備')}（{st.session_state.edit_buffer.get('設備請購維修編號')}）")
 
     # 寫入修改紀錄
     try:
