@@ -51,7 +51,13 @@ with st.form("edit_form"):
     st.text_input("設備請購維修編號", value=st.session_state.edit_buffer["設備請購維修編號"], key="code", disabled=True)
 
     # 設備狀況只允許on/off/non三選
-    st.session_state.edit_buffer["設備狀況"] = st.selectbox("設備狀況", ["on", "off", "non"], index=["on", "off", "non"].index(str(st.session_state.edit_buffer["設備狀況"]).strip() if str(st.session_state.edit_buffer["設備狀況"]).strip() in ["on", "off", "non"] else 0))
+status_options = ["on", "off", "non"]
+current_status = str(st.session_state.edit_buffer.get("設備狀況", "on")).strip()
+if current_status in status_options:
+    status_index = status_options.index(current_status)
+else:
+    status_index = 0
+st.session_state.edit_buffer["設備狀況"] = st.selectbox("設備狀況", status_options, index=status_index)
 
     # 其餘欄位
     for col in original:
