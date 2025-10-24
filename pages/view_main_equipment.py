@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
 from io import BytesIO
 
 # 權限檢查
@@ -31,25 +31,24 @@ def status_light(status):
     return f'<span style="display:inline-block;width:16px;height:16px;border-radius:8px;background-color:{color};margin-right:8px;vertical-align:middle"></span>{text}'
 
 def maintenance_light(next_time):
-    if isinstance(next_time, float) and pd.isna(next_time):   # 若為nan
-        return '<span style="background:#bbb;width:16px;height:16px;border-radius:8px;display:inline-block;"></span> 無資料'
+    # 空值、NaN、非日期統一黑色
     try:
+        if pd.isna(next_time) or not str(next_time).strip():
+            raise ValueError
         next_date = pd.to_datetime(str(next_time), errors='coerce')
         if pd.isna(next_date):
             raise ValueError
         today = datetime.today()
         delta = (next_date - today).days
         if delta < 0:
-            # 已逾期
             color = "red"
         elif delta <= 31:
-            # 一個月內(31天)
             color = "yellow"
         else:
             color = "green"
         return f'<span style="display:inline-block;width:16px;height:16px;border-radius:8px;background-color:{color};margin-right:8px;vertical-align:middle"></span>{next_time}'
-    except Exception as e:
-        return '<span style="background:#bbb;width:16px;height:16px;border-radius:8px;display:inline-block;"></span> 無法解析'
+    except Exception:
+        return '<span style="display:inline-block;width:16px;height:16px;border-radius:8px;background-color:black;margin-right:8px;vertical-align:middle"></span>無資料'
 
 # ---------- 製作顯示用 DataFrame ----------
 df_disp = df.copy()
@@ -59,29 +58,40 @@ if "設備狀況" in df_disp.columns:
 if "下次維修日期" in df_disp.columns:
     df_disp["維修保養提示"] = df_disp["下次維修日期"].apply(maintenance_light)
 
-# ---------- 顯示於頁面 ----------
+# ---------- 顯示於頁面，不換行、最寬自適應 ----------
 st.markdown("""
 <style>
-    table td {white-space: nowrap;}
+    table {
+        table-layout: auto !important;
+    }
+    td {
+        white-space: nowrap !important;
+        font-size: 15px !important;
+        vertical-align: middle !important;
+    }
+    th {
+        white-space: nowrap !important;
+        background: #e0f0ff !important;
+        font-size: 15px !important;
+    }
 </style>
 """, unsafe_allow_html=True)
-
-st.write("（部分欄位已加燈號）")
+st.write("（部分欄位已加燈號；欄寬自隨最大資料自適應）")
 st.write(df_disp.to_html(escape=False, index=False), unsafe_allow_html=True)
 
+# ---------- 匯出 ----------
 st.markdown("---")
 st.markdown("💾 若需另存資料，請選擇下載格式：")
 
-# ---------- 下載 CSV ----------
-csv_data = '\ufeff' + df.to_csv(index=False)    # BOM 避免 Excel 亂碼
+# CSV 匯出
+csv_data = '\ufeff' + df.to_csv(index=False)
 st.download_button(
     "下載 CSV",
     data=csv_data.encode("utf-8"),
     file_name="main_equipment_system.csv",
     mime="text/csv"
 )
-
-# ---------- 下載 Excel ----------
+# Excel 匯出
 excel_buffer = BytesIO()
 df.to_excel(excel_buffer, index=False, engine="openpyxl")
 st.download_button(
@@ -90,9 +100,3 @@ st.download_button(
     file_name="main_equipment_system.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
-
-st.markdown("---")
-st.markdown("📸 若需將資料另存為圖片，請使用下方工具：")
-# 圖片儲存（轉到圖片分頁）
-if st.button("🖼️ 將主設備資料匯出為圖片"):
-    st.switch_page("pages/export_image.py")
