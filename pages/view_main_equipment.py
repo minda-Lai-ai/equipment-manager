@@ -27,22 +27,23 @@ def status_light(status):
     return f'<span style="display:inline-block;width:16px;height:16px;border-radius:8px;background-color:{color};margin-right:6px;vertical-align:middle"></span>{status}'
 
 def maintenance_light(next_time):
-    # 一律只回傳燈號（不顯示文字）
+    # 一律回傳燈號，不論next_time為何
     try:
-        # 空值/NaN都黑燈
         if pd.isna(next_time) or not str(next_time).strip():
-            raise ValueError
-        next_date = pd.to_datetime(str(next_time), errors='coerce')
-        if pd.isna(next_date):
-            raise ValueError
-        today = datetime.today()
-        delta = (next_date - today).days
-        if delta < 0:
-            color = "red"
-        elif delta <= 31:
-            color = "yellow"
+            color = "black"
         else:
-            color = "green"
+            next_date = pd.to_datetime(str(next_time), errors='coerce')
+            if pd.isna(next_date):
+                color = "black"
+            else:
+                today = datetime.today()
+                delta = (next_date - today).days
+                if delta < 0:
+                    color = "red"
+                elif delta <= 31:
+                    color = "yellow"
+                else:
+                    color = "green"
     except Exception:
         color = "black"
     return f'<span style="display:inline-block;width:16px;height:16px;border-radius:8px;background-color:{color};vertical-align:middle"></span>'
