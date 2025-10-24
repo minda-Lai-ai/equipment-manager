@@ -27,8 +27,9 @@ def status_light(status):
     return f'<span style="display:inline-block;width:16px;height:16px;border-radius:8px;background-color:{color};margin-right:6px;vertical-align:middle"></span>{status}'
 
 def maintenance_light(next_time):
-    # 若為空、nan、亂碼則黑燈，否則依規則給
+    # 一律只回傳燈號（不顯示文字）
     try:
+        # 空值/NaN都黑燈
         if pd.isna(next_time) or not str(next_time).strip():
             raise ValueError
         next_date = pd.to_datetime(str(next_time), errors='coerce')
@@ -44,7 +45,6 @@ def maintenance_light(next_time):
             color = "green"
     except Exception:
         color = "black"
-    # 只顯示燈號無文字
     return f'<span style="display:inline-block;width:16px;height:16px;border-radius:8px;background-color:{color};vertical-align:middle"></span>'
 
 # 產生顯示用 dataframe
