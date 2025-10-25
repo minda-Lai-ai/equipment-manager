@@ -5,3 +5,5 @@ fpdf
 pyyaml
 matplotlib
 openpyxl
+streamlit
+supabase
