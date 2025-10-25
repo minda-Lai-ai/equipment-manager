@@ -1,103 +1,68 @@
 import streamlit as st
-import sqlite3
-
-def init_db():
-    conn = sqlite3.connect("users.db")
-    c = conn.cursor()
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            username TEXT PRIMARY KEY,
-            password_hash TEXT NOT NULL,
-            role TEXT NOT NULL
-        )
-    """)
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS user_logs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT,
-            action TEXT,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-init_db()  # <= 關鍵：每個子頁頂端都加這行
-
 import hashlib
+from supabase import create_client
 
-def hash_password(password):
-    return hashlib.sha256(password.encode()).hexdigest()
-
-def log_user_action(username, action):
-    conn = sqlite3.connect("users.db")
-    c = conn.cursor()
-    c.execute("INSERT INTO user_logs (username, action) VALUES (?, ?)", (username, action))
-    conn.commit()
-    conn.close()
-
-# 僅限管理員進入，否則阻擋    
+# 權限檢查
 if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
-    st.error("尚未登入，請先登入。")
+    st.error("尚未登入或登入已逾時，請回主畫面重新登入。")
     st.stop()
 if st.session_state.get("role") != "管理員":
     st.error("權限不足：僅限管理員！")
     st.stop()
 
-st.title("🛡️ 帳號管理中心")
-conn = sqlite3.connect("users.db")
-c = conn.cursor()
+@st.cache_resource
+def init_supabase():
+    url = st.secrets["supabase"]["url"]
+    key = st.secrets["supabase"]["key"]
+    return create_client(url, key)
 
-# --- 新增帳號 ---
+supabase = init_supabase()
+
+def hash_password(pw):
+    return hashlib.sha256(pw.encode()).hexdigest()
+
+st.title("🛡️ 帳號管理中心")
+
+# 新增使用者
 with st.expander("➕ 新增使用者"):
     new_username = st.text_input("新帳號", key="add_user")
     new_pw = st.text_input("新密碼", type="password", key="add_pw")
     new_role = st.selectbox("角色", ["一般使用者", "管理員"], key="add_role")
     if st.button("新增"):
-        c.execute("SELECT 1 FROM users WHERE username = ?", (new_username,))
-        if c.fetchone():
-            st.warning("帳號已存在")
-        elif not new_username or not new_pw:
-            st.warning("請填帳號密碼")
-        else:
-            c.execute("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
-                      (new_username, hash_password(new_pw), new_role))
-            conn.commit()
-            log_user_action(st.session_state["username"], f"新增用戶({new_username})")
+        try:
+            supabase.table("users").insert({
+                "username": new_username,
+                "password_hash": hash_password(new_pw),
+                "role": new_role
+            }).execute()
             st.success("新增成功！")
+        except Exception as e:
+            st.error(f"新增失敗：{e}")
 
-
+# 使用者列表
 st.markdown("---")
 st.subheader("使用者列表與維護")
+users = supabase.table("users").select("*").execute().data
 
-users = c.execute("SELECT username, role FROM users").fetchall()
-for username, role in users:
+for user in users:
+    username = user["username"]
+    role = user["role"]
     st.write(f"帳號：{username}　|　角色：{role}")
     if username != st.session_state["username"]:
         with st.expander(f"管理 [{username}]"):
-            # 修改密碼
             ch_pw = st.text_input("新密碼", type="password", key=f"pw_{username}")
             if st.button("修改密碼", key=f"chg_{username}"):
-                if not ch_pw:
-                    st.warning("請輸入新密碼")
-                else:
-                    c.execute("UPDATE users SET password_hash=? WHERE username=?", (hash_password(ch_pw), username))
-                    conn.commit()
-                    log_user_action(st.session_state["username"], f"修改 {username} 密碼")
-                    st.success("密碼已變更")
-            # 刪除帳號
+                supabase.table("users").update({
+                    "password_hash": hash_password(ch_pw)
+                }).eq("username", username).execute()
+                st.success("密碼已變更")
             if st.button("刪除此帳號", key=f"del_{username}"):
-                c.execute("DELETE FROM users WHERE username=?", (username,))
-                conn.commit()
-                log_user_action(st.session_state["username"], f"刪除 {username}")
+                supabase.table("users").delete().eq("username", username).execute()
                 st.success("此帳號已刪除")
 
+# 操作紀錄
 st.markdown("---")
 st.subheader("🔎 使用者動作紀錄")
-logs = c.execute(
-    "SELECT username, action, timestamp FROM user_logs ORDER BY timestamp DESC LIMIT 200"
-).fetchall()
-for l_username, l_action, l_time in logs:
-    st.write(f"{l_time} - {l_username} - {l_action}")
-
-conn.close()
+logs = supabase.table("user_logs").select("*").order("timestamp", desc=True).limit(200).execute().data
+for log in logs:
+    st.write(f"{log['timestamp']} - {log['username']} - {log['action']}")
