@@ -1,25 +1,21 @@
 import streamlit as st
-
-from supabase import create_client
 import pandas as pd
+from supabase import create_client
+from modules.four_level_selector import four_level_selector
 
-supabase = create_client("https://todjfbmcaxecrqlkkvkd.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZGpmYm1jYXhlY3JxbGtrdmtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzMjk3NDgsImV4cCI6MjA3NjkwNTc0OH0.0uTJcrHwvnGM8YT1bPHzMyGkQHIJUZWXsVEwEPjp0sA")
-result = supabase.table("history_maintenance_log").select("*").execute()
-df = pd.DataFrame(result.data)
-
+supabase = create_client(
+    "https://todjfbmcaxecrqlkkvkd.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZGpmYm1jYXhlY3JxbGtrdmtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzMjk3NDgsImV4cCI6MjA3NjkwNTc0OH0.0uTJcrHwvnGM8YT1bPHzMyGkQHIJUZWXsVEwEPjp0sA"
+)
 
 # 權限檢查
 if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
     st.error("尚未登入或登入已逾時，請回主畫面重新登入。")
     st.stop()
 
-# 顯示登入者資訊於頁首或側邊欄
 st.sidebar.markdown("---")
 st.sidebar.write(f"👤 使用者：{st.session_state['username']}")
 st.sidebar.write(f"🧩 角色：{st.session_state['role']}")
-
-import pandas as pd
-from modules.four_level_selector import four_level_selector
 
 st.set_page_config(page_title="🆕 新增保養事件", layout="wide")
 st.title("🆕 新增保養事件")
@@ -27,9 +23,9 @@ st.title("🆕 新增保養事件")
 if st.button("🔙 返回主控面板"):
     st.switch_page("main_dashboard.py")
 
-main_df = pd.read_csv("data/main_equipment_system.csv")
-log_path = "data/history_maintenance_log.csv"
-log_df = pd.read_csv(log_path)
+# 從 Supabase 讀設備
+result = supabase.table("main_equipment_system").select("*").execute()
+main_df = pd.DataFrame(result.data)
 
 result = four_level_selector(main_df)
 filtered_df = result["filtered_df"]
@@ -85,6 +81,6 @@ if compare:
             st.markdown(f"▫️ {col}：`{old}`（未變更）")
 
 if save:
-    log_df = pd.concat([log_df, pd.DataFrame([st.session_state.event_buffer])], ignore_index=True)
-    log_df.to_csv(log_path, index=False)
+    supabase.table("history_maintenance_log").insert([st.session_state.event_buffer]).execute()
     st.success(f"✅ 已新增事件：{st.session_state.event_buffer['事件類型']}（{st.session_state.event_buffer['設備請購維修編號']}）")
+
