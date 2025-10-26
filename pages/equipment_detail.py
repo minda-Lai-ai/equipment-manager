@@ -5,6 +5,13 @@ from utils.status_utils import status_light, maintenance_light
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
 
+from supabase import create_client
+import pandas as pd
+
+supabase = create_client("https://todjfbmcaxecrqlkkvkd.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZGpmYm1jYXhlY3JxbGtrdmtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzMjk3NDgsImV4cCI6MjA3NjkwNTc0OH0.0uTJcrHwvnGM8YT1bPHzMyGkQHIJUZWXsVEwEPjp0sA")
+result = supabase.table("main_equipment_system").select("*").execute()
+df = pd.DataFrame(result.data)
+
 def equipment_info_image(row):
     # 設置中文字型（如：Microsoft JhengHei/微軟正黑體、SimHei等必須已安裝）
     font_path = "/usr/share/fonts/truetype/arphic/ukai.ttc"  # Linux (可換成適用路徑)
