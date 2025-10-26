@@ -1,5 +1,12 @@
 import streamlit as st
 
+from supabase import create_client
+import pandas as pd
+
+supabase = create_client("https://todjfbmcaxecrqlkkvkd.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZGpmYm1jYXhlY3JxbGtrdmtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzMjk3NDgsImV4cCI6MjA3NjkwNTc0OH0.0uTJcrHwvnGM8YT1bPHzMyGkQHIJUZWXsVEwEPjp0sA")
+result = supabase.table("abnormal_log").select("*").execute()
+df = pd.DataFrame(result.data)
+
 # 權限檢查
 if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
     st.error("尚未登入或登入已逾時，請回主畫面重新登入。")
