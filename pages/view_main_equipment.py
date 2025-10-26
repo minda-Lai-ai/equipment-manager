@@ -2,14 +2,15 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 from io import BytesIO
-
 from supabase import create_client
-import pandas as pd
 
-supabase = create_client("https://todjfbmcaxecrqlkkvkd.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZGpmYm1jYXhlY3JxbGtrdmtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzMjk3NDgsImV4cCI6MjA3NjkwNTc0OH0.0uTJcrHwvnGM8YT1bPHzMyGkQHIJUZWXsVEwEPjp0sA")
-result = supabase.table("main_equipment_system").select("*").execute()
-df = pd.DataFrame(result.data)
+# 連線 Supabase
+supabase = create_client(
+    "https://todjfbmcaxecrqlkkvkd.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZGpmYm1jYXhlY3JxbGtrdmtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzMjk3NDgsImV4cCI6MjA3NjkwNTc0OH0.0uTJcrHwvnGM8YT1bPHzMyGkQHIJUZWXsVEwEPjp0sA"
+)
 
+# 權限檢查
 if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
     st.error("尚未登入或登入已逾時，請回主畫面重新登入。")
     st.stop()
@@ -23,18 +24,15 @@ st.title("🔍 主設備資料總覽")
 if st.button("🔙 返回主控面板"):
     st.switch_page("main_dashboard.py")
 
-try:
-    df = pd.read_csv("data/main_equipment_system.csv")
-except Exception as e:
-    st.error(f"❌ 無法載入主設備資料庫：{e}")
-    st.stop()
+# 直接載入雲端主設備資料
+result = supabase.table("main_equipment_system").select("*").execute()
+df = pd.DataFrame(result.data)
 
 def status_light(status):
     color = {"on": "green", "off": "red", "none": "black"}.get(str(status).strip().lower(), "gray")
     return f'<span style="display:inline-block;width:16px;height:16px;border-radius:8px;background-color:{color};margin-right:6px;vertical-align:middle"></span>{status}'
 
 def maintenance_light(next_time):
-    # 一律回傳燈號，不論next_time為何
     try:
         if pd.isna(next_time) or not str(next_time).strip():
             color = "black"
@@ -55,14 +53,14 @@ def maintenance_light(next_time):
         color = "black"
     return f'<span style="display:inline-block;width:16px;height:16px;border-radius:8px;background-color:{color};vertical-align:middle"></span>'
 
-# 產生顯示用 dataframe
+# 準備顯示用 dataframe
 df_disp = df.copy()
 if "設備狀況" in df_disp.columns:
     df_disp["設備狀況"] = df_disp["設備狀況"].apply(status_light)
 if "下次維修日期" in df_disp.columns:
     df_disp["維修保養提示"] = df_disp["下次維修日期"].apply(maintenance_light)
 
-# 美化表格，不換行＋自動寬＋表頭藍底白字
+# 美化表格
 st.markdown("""
 <style>
     table {table-layout:auto !important;}
