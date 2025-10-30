@@ -22,7 +22,7 @@ if st.button("🔙 返回主控面板"):
     st.switch_page("main_dashboard.py")
 
 # 雲端設備選單
-main_result = supabase.table("main_equipment_system").select("*").execute()
+main_result = supabase.table("history_maintenance_log").select("*").execute()
 eq_df = pd.DataFrame(main_result.data)
 
 # 主要下拉選單（不直接用四階，一次全選項）
