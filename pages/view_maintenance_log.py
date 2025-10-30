@@ -22,6 +22,37 @@ st.title("🔍 保養履歷資料總覽")
 if st.button("🔙 返回主控面板"):
     st.switch_page("main_dashboard.py")
 
+
+# ...省略前面 import、連線等...
+
+# 放在 dataframe 顯示前
+st.markdown("""
+<style>
+    table {table-layout:auto !important;}
+    th {
+        white-space:normal !important;
+        background: #2363a9 !important;
+        color: #fff !important;
+        font-size: 15px !important;
+        text-align: center !important;
+    }
+    td {
+        white-space:normal !important;
+        font-size: 15px !important;
+        vertical-align: middle !important;
+        text-align: center !important;
+        word-break:break-all !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# 下面顯示 table 就會有自動換行
+st.write(df.to_html(escape=False, index=False), unsafe_allow_html=True)
+
+
+
+
+
 result = supabase.table("history_maintenance_log").select("*").execute()
 df = pd.DataFrame(result.data)
 
