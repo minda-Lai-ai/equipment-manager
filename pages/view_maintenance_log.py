@@ -22,6 +22,9 @@ st.title("🔍 保養履歷資料總覽")
 if st.button("🔙 返回主控面板"):
     st.switch_page("main_dashboard.py")
 
+result = supabase.table("history_maintenance_log").select("*").execute()
+df = pd.DataFrame(result.data)
+
 
 # ...省略前面 import、連線等...
 
@@ -52,9 +55,6 @@ st.write(df.to_html(escape=False, index=False), unsafe_allow_html=True)
 
 
 
-
-result = supabase.table("history_maintenance_log").select("*").execute()
-df = pd.DataFrame(result.data)
 
 main_order_top = ["亞冠", "瑞弘一代", "瑞弘二代"]
 main_order_bottom = ["超馬480V", "祐旭480V", "超馬460V", "檢測設備", "車輛相關"]
