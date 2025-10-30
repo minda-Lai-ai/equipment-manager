@@ -25,37 +25,6 @@ if st.button("🔙 返回主控面板"):
 result = supabase.table("history_maintenance_log").select("*").execute()
 df = pd.DataFrame(result.data)
 
-
-# ...省略前面 import、連線等...
-
-# 放在 dataframe 顯示前
-st.markdown("""
-<style>
-    table {table-layout:auto !important;}
-    th {
-        white-space:normal !important;
-        background: #2363a9 !important;
-        color: #fff !important;
-        font-size: 15px !important;
-        text-align: center !important;
-    }
-    td {
-        white-space:normal !important;
-        font-size: 15px !important;
-        vertical-align: middle !important;
-        text-align: center !important;
-        word-break:break-all !important;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# 下面顯示 table 就會有自動換行
-st.write(df.to_html(escape=False, index=False), unsafe_allow_html=True)
-
-
-
-
-
 main_order_top = ["亞冠", "瑞弘一代", "瑞弘二代"]
 main_order_bottom = ["超馬480V", "祐旭480V", "超馬460V", "檢測設備", "車輛相關"]
 def get_main_rank(val):
