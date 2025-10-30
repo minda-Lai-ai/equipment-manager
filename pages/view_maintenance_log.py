@@ -25,6 +25,33 @@ if st.button("🔙 返回主控面板"):
 result = supabase.table("history_maintenance_log").select("*").execute()
 df = pd.DataFrame(result.data)
 
+#MINDA
+
+# 取得履歷資料
+result = supabase.table("history_maintenance_log").select("*").execute()
+df = pd.DataFrame(result.data)
+
+# ====== 在這裡加入你需求的格式處理 ======
+
+# 處理、包裝函數（可放在上面，也可放此）
+def wrap_text(...): ...
+def get_colwidths(...): ...
+def df_to_html_custom(...): ...
+
+if "事件處理說明" in df.columns:
+    df["事件處理說明"] = df["事件處理說明"].apply(wrap_text)
+
+st.markdown("""
+<style>
+td, th { vertical-align:top !important; }
+</style>
+""", unsafe_allow_html=True)
+
+# ====== 在原本 st.write(df) 的地方改成下面這行 ======
+st.write(df_to_html_custom(df), unsafe_allow_html=True)
+
+#MINDA
+
 main_order_top = ["亞冠", "瑞弘一代", "瑞弘二代"]
 main_order_bottom = ["超馬480V", "祐旭480V", "超馬460V", "檢測設備", "車輛相關"]
 def get_main_rank(val):
