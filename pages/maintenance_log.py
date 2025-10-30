@@ -23,7 +23,7 @@ if st.button("🔙 返回主控面板"):
     st.switch_page("main_dashboard.py")
 
 # 四階選單來自雲端設備表
-main_result = supabase.table("main_equipment_system").select("*").execute()
+main_result = supabase.table("history_maintenance_log").select("*").execute()
 main_df = pd.DataFrame(main_result.data)
 result = four_level_selector(main_df)
 filtered_df = result["filtered_df"]
