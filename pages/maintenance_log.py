@@ -78,8 +78,10 @@ with col2:
         st.info("🔄 已復原為原始資料")
 with col3:
     if st.button("💾 儲存修改"):
-        # 根據本筆資料唯一 id（假設有 id 欄位）直接寫回 Supabase
-        record_id = selected_row["id"]  # 你的 table 必須有 id 主鍵
+        # 自動覆蓋 "表單修改人" 為當前使用者名字
+        st.session_state.log_buffer["表單修改人"] = st.session_state['username']
+
+        record_id = selected_row["id"]
         supabase.table("history_maintenance_log").update(st.session_state.log_buffer).eq("id", record_id).execute()
-        st.success(f"✅ 已儲存事件修改（資料列 {selected_index}）")
+        st.success(f"✅ 已儲存事件修改（資料列 {selected_index}，修改人：{st.session_state['username']}）")
         st.session_state.edit_mode = False
