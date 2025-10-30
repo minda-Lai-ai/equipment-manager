@@ -46,10 +46,9 @@ st.subheader("✏️ 新增事件欄位")
 
 with st.form("event_form"):
     編號 = st.text_input("編號")
-    事件日期 = st.text_input("事件日期")  # 可改用 st.date_input
+    發生異常日期 = st.text_input("發生異常日期")  # 可改用 st.date_input
     事件項目 = st.text_input("事件項目")  # 新增欄位
-    事件類型 = st.text_input("事件類型")
-    事件描述 = st.text_area("事件描述")
+    事件處理說明 = st.text_area("事件處理說明")
     備註 = st.text_area("備註")
 
     save = st.form_submit_button("💾 儲存")
