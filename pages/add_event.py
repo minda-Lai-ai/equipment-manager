@@ -1,11 +1,10 @@
 import streamlit as st
 import pandas as pd
 from supabase import create_client
-from modules.four_level_selector import four_level_selector
 
 supabase = create_client(
     "https://todjfbmcaxecrqlkkvkd.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZGpmYm1jYXhlY3JxbGtrdmtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzMjk3NDgsImV4cCI6MjA3NjkwNTc0OH0.0uTJcrHwvnGM8YT1bPHzMyGkQHIJUZWXsVEwEPjp0sA"
+    "你的 supabase key"
 )
 
 # 權限檢查
@@ -19,68 +18,65 @@ st.sidebar.write(f"🧩 角色：{st.session_state['role']}")
 
 st.set_page_config(page_title="🆕 新增保養事件", layout="wide")
 st.title("🆕 新增保養事件")
-
 if st.button("🔙 返回主控面板"):
     st.switch_page("main_dashboard.py")
 
-# 從 Supabase 讀設備
-result = supabase.table("history_maintenance_log").select("*").execute()
-main_df = pd.DataFrame(result.data)
+# 雲端設備選單
+main_result = supabase.table("main_equipment_system").select("*").execute()
+eq_df = pd.DataFrame(main_result.data)
 
-result = four_level_selector(main_df)
-filtered_df = result["filtered_df"]
+# 主要下拉選單（不直接用四階，一次全選項）
+main_options = sorted(eq_df["主設備"].dropna().unique().tolist())
+main_sel = st.selectbox("主設備", main_options)
+sub_df = eq_df[eq_df["主設備"] == main_sel]
 
-if filtered_df.empty:
-    st.warning("⚠️ 找不到符合條件的設備")
-    st.stop()
+sub_options = sorted(sub_df["次設備"].dropna().unique().tolist())
+sub_sel = st.selectbox("次設備", sub_options)
+eq2_df = sub_df[sub_df["次設備"] == sub_sel]
 
-row = filtered_df.iloc[0]
-original = {
-    "主設備": row["主設備"],
-    "次設備": row["次設備"],
-    "設備": row["設備"],
-    "設備請購維修編號": row["設備請購維修編號"],
-    "事件日期": "",
-    "事件類型": "",
-    "事件描述": "",
-    "備註": ""
-}
+device_options = sorted(eq2_df["設備"].dropna().unique().tolist())
+device_sel = st.selectbox("設備", device_options)
+eq3_df = eq2_df[eq2_df["設備"] == device_sel]
 
-if "event_buffer" not in st.session_state:
-    st.session_state.event_buffer = original.copy()
+eid_options = sorted(eq3_df["設備請購維修編號"].dropna().unique().tolist())
+eid_sel = st.selectbox("設備請購維修編號", eid_options)
 
 st.markdown("---")
 st.subheader("✏️ 新增事件欄位")
 
 with st.form("event_form"):
-    for col in original:
-        st.session_state.event_buffer[col] = st.text_input(f"{col}", value=st.session_state.event_buffer[col])
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        back = st.form_submit_button("🔙 上一步")
-    with col2:
-        reset = st.form_submit_button("🔄 復原")
-    with col3:
-        compare = st.form_submit_button("⏭️ 下一步")
-    with col4:
-        save = st.form_submit_button("💾 儲存")
+    編號 = st.text_input("編號")
+    事件日期 = st.text_input("事件日期")  # 可改用 st.date_input
+    事件項目 = st.text_input("事件項目")  # 新增欄位
+    事件類型 = st.text_input("事件類型")
+    事件描述 = st.text_area("事件描述")
+    備註 = st.text_area("備註")
+
+    save = st.form_submit_button("💾 儲存")
+    reset = st.form_submit_button("🔄 復原")
 
 if reset:
-    st.session_state.event_buffer = original.copy()
-    st.info("🔄 已復原為初始欄位")
-
-if compare:
-    st.markdown("---")
-    st.subheader("🧮 新增事件內容比較")
-    for col in original:
-        old = original[col]
-        new = st.session_state.event_buffer[col]
-        if old != new:
-            st.markdown(f"🔸 **{col}**：`{old}` → `🆕 {new}`")
-        else:
-            st.markdown(f"▫️ {col}：`{old}`（未變更）")
+    st.experimental_rerun()
 
 if save:
-    supabase.table("history_maintenance_log").insert([st.session_state.event_buffer]).execute()
-    st.success(f"✅ 已新增事件：{st.session_state.event_buffer['事件類型']}（{st.session_state.event_buffer['設備請購維修編號']}）")
+    new_event = {
+        "主設備": main_sel,
+        "次設備": sub_sel,
+        "設備": device_sel,
+        "設備請購維修編號": eid_sel,
+        "編號": 編號,
+        "事件日期": 事件日期,
+        "事件項目": 事件項目,
+        "事件類型": 事件類型,
+        "事件描述": 事件描述,
+        "備註": 備註,
+        "表單修改人": st.session_state['username']
+    }
+    # 必須確保 new_event key 跟 table schema完全一致
+    # 如還有其他必填欄位請補上，欄位型態勿留空
 
+    try:
+        supabase.table("history_maintenance_log").insert([new_event]).execute()
+        st.success(f"✅ 已新增事件：{事件類型} 編號：{編號}")
+    except Exception as e:
+        st.error(f"❌ 新增失敗，請檢查欄位/資料型態或RLS Policy，訊息：{e}")
