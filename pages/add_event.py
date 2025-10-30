@@ -24,7 +24,7 @@ if st.button("🔙 返回主控面板"):
     st.switch_page("main_dashboard.py")
 
 # 從 Supabase 讀設備
-result = supabase.table("main_equipment_system").select("*").execute()
+result = supabase.table("history_maintenance_log").select("*").execute()
 main_df = pd.DataFrame(result.data)
 
 result = four_level_selector(main_df)
