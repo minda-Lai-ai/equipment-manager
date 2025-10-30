@@ -26,6 +26,12 @@ if st.button("🔙 返回主控面板"):
 # 取得雲端資料
 result = supabase.table("history_maintenance_log").select("*").execute()
 df = pd.DataFrame(result.data)
+
+# 排序：同設備一起，異常日期最近排最上
+if "設備" in df.columns and "發生異常日期" in df.columns:
+    df["發生異常日期"] = pd.to_datetime(df["發生異常日期"], errors="coerce")
+    df = df.sort_values(by=["設備", "發生異常日期"], ascending=[True, False])
+
 st.dataframe(df, use_container_width=True)
 
 st.markdown("---")
@@ -50,14 +56,13 @@ st.download_button(
 st.markdown("📸 若需將表格存為圖片（PNG），請點選按鈕自動生成一張全部欄位的圖片：")
 
 def df_to_image(dataframe, title="保養履歷總表"):
-    # 基本表格文字渲染（需支援中文字型/雲端環境要換字型路徑）
     font = ImageFont.load_default()
     col_list = list(dataframe.columns)
     rows = dataframe.astype(str).values.tolist()
     cell_width = 200
     cell_height = 30
     img_width = cell_width * len(col_list)
-    img_height = cell_height * (len(rows)+2)
+    img_height = cell_height * (len(rows) + 2)
     image = Image.new("RGB", (img_width, img_height), "white")
     draw = ImageDraw.Draw(image)
     draw.text((20, 10), title, font=font, fill="black")
