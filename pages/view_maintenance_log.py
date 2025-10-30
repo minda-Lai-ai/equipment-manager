@@ -27,10 +27,6 @@ df = pd.DataFrame(result.data)
 
 #MINDA
 
-# 取得履歷資料
-result = supabase.table("history_maintenance_log").select("*").execute()
-df = pd.DataFrame(result.data)
-
 # ====== 在這裡加入你需求的格式處理 ======
 
 # 處理、包裝函數（可放在上面，也可放此）
