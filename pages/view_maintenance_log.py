@@ -26,28 +26,46 @@ if st.button("🔙 返回主控面板"):
 result = supabase.table("history_maintenance_log").select("*").execute()
 df = pd.DataFrame(result.data)
 
-# 1. 主設備自訂排序
-main_order = ["亞冠", "瑞弘一代", "瑞弘二代", "超馬480V", "祐旭480V", "超馬460V", "檢測設備", "車輛相關"]
-main_map = {v: i for i, v in enumerate(main_order)}
-df["主設備_序"] = df["主設備"].map(main_map).fillna(99).astype(int)
+# 主設備自訂排序（最後五個+空白排最後）
+main_order = [
+    "亞冠", "瑞弘一代", "瑞弘二代",  # 先排這三個
+    # 以下五個排最後
+    "超馬480V", "祐旭480V", "超馬460V", "檢測設備", "車輛相關"
+]
+def get_main_rank(val):
+    if pd.isna(val) or (str(val).strip() == ""):
+        return 999  # 空白永遠最後
+    if val in main_order:
+        return main_order.index(val)
+    # 未列在指定名單者在這三個之間（保守處理）
+    return len(main_order)
 
-# 2. 次設備自訂排序
+df["主設備_序"] = df["主設備"].apply(get_main_rank)
+
+# 次設備自訂排序
 sub_order = [
-    "壓縮機(C1~C4-2或C401~C702)", "進氣系統", "散熱風車",
+    "壓縮機(C1~C4-2或C401~C702)", "凝結箱", "進氣系統", "散熱風車",
     "空壓油壓系統", "除霜系統", "回收油系統", "活性碳系統", "電控系統"
 ]
-sub_map = {v: i for i, v in enumerate(sub_order)}
-df["次設備_序"] = df["次設備"].map(sub_map).fillna(99).astype(int)
+def get_sub_rank(val):
+    if pd.isna(val) or (str(val).strip() == ""):
+        return 999
+    if val in sub_order:
+        return sub_order.index(val)
+    return len(sub_order)
 
-# 3. 處理異常日期（由新到舊）
+df["次設備_序"] = df["次設備"].apply(get_sub_rank)
+
+# 日期處理（由新到舊）
 if "發生異常日期" in df.columns:
     df["發生異常日期"] = pd.to_datetime(df["發生異常日期"], errors="coerce")
 
-# 4. 進行多級排序
-sort_cols = ["主設備_序", "主設備", "次設備_序", "次設備", "發生異常日期"]
-df = df.sort_values(by=sort_cols, ascending=[True, True, True, True, False])
+# 排序：先主設備順序，再主設備名，再次設備順序，再次設備名，再日期新到舊
+df = df.sort_values(
+    by=["主設備_序", "主設備", "次設備_序", "次設備", "發生異常日期"],
+    ascending=[True, True, True, True, False]
+)
 
-# 5. 顯示&匯出（移除臨時排序欄位）
 view_df = df.drop(columns=["主設備_序", "次設備_序"])
 st.dataframe(view_df, use_container_width=True)
 
