@@ -75,6 +75,6 @@ if save:
 
     try:
         supabase.table("history_maintenance_log").insert([new_event]).execute()
-        st.success(f"✅ 已新增事件：{事件類型} 編號：{編號}")
+        st.success(f"✅ 已新增事件：{編號} 編號：{編號}")
     except Exception as e:
         st.error(f"❌ 新增失敗，請檢查欄位/資料型態或RLS Policy，訊息：{e}")
