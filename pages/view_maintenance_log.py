@@ -23,21 +23,38 @@ st.title("🔍 保養履歷資料總覽")
 if st.button("🔙 返回主控面板"):
     st.switch_page("main_dashboard.py")
 
-# 取得雲端資料
 result = supabase.table("history_maintenance_log").select("*").execute()
 df = pd.DataFrame(result.data)
 
-# 排序：同設備一起，異常日期最近排最上
-if "設備" in df.columns and "發生異常日期" in df.columns:
-    df["發生異常日期"] = pd.to_datetime(df["發生異常日期"], errors="coerce")
-    df = df.sort_values(by=["設備", "發生異常日期"], ascending=[True, False])
+# 1. 主設備自訂排序
+main_order = ["亞冠", "瑞弘一代", "瑞弘二代", "超馬480V", "祐旭480V", "超馬460V", "檢測設備", "車輛相關"]
+main_map = {v: i for i, v in enumerate(main_order)}
+df["主設備_序"] = df["主設備"].map(main_map).fillna(99).astype(int)
 
-st.dataframe(df, use_container_width=True)
+# 2. 次設備自訂排序
+sub_order = [
+    "壓縮機(C1~C4-2或C401~C702)", "進氣系統", "散熱風車",
+    "空壓油壓系統", "除霜系統", "回收油系統", "活性碳系統", "電控系統"
+]
+sub_map = {v: i for i, v in enumerate(sub_order)}
+df["次設備_序"] = df["次設備"].map(sub_map).fillna(99).astype(int)
+
+# 3. 處理異常日期（由新到舊）
+if "發生異常日期" in df.columns:
+    df["發生異常日期"] = pd.to_datetime(df["發生異常日期"], errors="coerce")
+
+# 4. 進行多級排序
+sort_cols = ["主設備_序", "主設備", "次設備_序", "次設備", "發生異常日期"]
+df = df.sort_values(by=sort_cols, ascending=[True, True, True, True, False])
+
+# 5. 顯示&匯出（移除臨時排序欄位）
+view_df = df.drop(columns=["主設備_序", "次設備_序"])
+st.dataframe(view_df, use_container_width=True)
 
 st.markdown("---")
 st.markdown("💾 若需另存資料（下載至本地裝置），請選擇格式：")
 
-csv_data = '\ufeff' + df.to_csv(index=False)
+csv_data = '\ufeff' + view_df.to_csv(index=False)
 st.download_button(
     "下載 CSV",
     data=csv_data.encode("utf-8"),
@@ -45,7 +62,7 @@ st.download_button(
     mime="text/csv"
 )
 excel_buffer = BytesIO()
-df.to_excel(excel_buffer, index=False, engine="openpyxl")
+view_df.to_excel(excel_buffer, index=False, engine="openpyxl")
 st.download_button(
     "下載 Excel",
     data=excel_buffer.getvalue(),
@@ -77,5 +94,5 @@ def df_to_image(dataframe, title="保養履歷總表"):
     return buf
 
 if st.button("🖼️ 下載履歷總表圖片"):
-    img_buf = df_to_image(df)
+    img_buf = df_to_image(view_df)
     st.download_button("🖼️ 下載 PNG 圖片", img_buf, file_name="history_maintenance_log.png", mime="image/png")
