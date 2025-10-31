@@ -62,8 +62,8 @@ with st.form("new_form"):
     # 其他欄位一律 text_input
     #minda
     columns = list(result.data[0].keys())
-        if "id" in columns:
-            columns.remove("id")
+    if "id" in columns:
+        columns.remove("id")
     #minda
     for col in columns:
         if col not in ["主設備", "次設備"]:
