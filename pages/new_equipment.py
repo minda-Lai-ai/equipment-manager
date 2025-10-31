@@ -4,7 +4,7 @@ from supabase import create_client
 
 supabase = create_client(
     "https://todjfbmcaxecrqlkkvkd.supabase.co",
-    "你的 supabase key"
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZGpmYm1jYXhlY3JxbGtrdmtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzMjk3NDgsImV4cCI6MjA3NjkwNTc0OH0.0uTJcrHwvnGM8YT1bPHzMyGkQHIJUZWXsVEwEPjp0sA"
 )
 
 if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
