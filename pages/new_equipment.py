@@ -49,6 +49,7 @@ else:
 次設備 = 次設備_custom.strip() if 次設備_custom.strip() != "" else 次設備_select
 #MINDA
 
+
 if "new_buffer" not in st.session_state:
     st.session_state.new_buffer = {col: "" for col in columns}
 
