@@ -4,7 +4,7 @@ from supabase import create_client
 
 supabase = create_client(
     "https://todjfbmcaxecrqlkkvkd.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZGpmYm1jYXhlY3JxbGtrdmtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzMjk3NDgsImV4cCI6MjA3NjkwNTc0OH0.0uTJcrHwvnGM8YT1bPHzMyGkQHIJUZWXsVEwEPjp0sA"
+    "aaa"
 )
 
 if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
@@ -32,7 +32,6 @@ else:
         "是否有備品", "請購履歷", "備品狀況", "備品位置", "備品數量", "表單修改人", "備註"
     ]
 
-# 強制去除id和created_at
 for drop_col in ["id", "created_at"]:
     if drop_col in columns:
         columns.remove(drop_col)
@@ -40,12 +39,38 @@ for drop_col in ["id", "created_at"]:
 if "new_buffer" not in st.session_state:
     st.session_state.new_buffer = {col: "" for col in columns}
 
+# 動態取得主設備/次設備/設備選單
+try:
+    df = pd.DataFrame(supabase.table("main_equipment_system").select("主設備,次設備,設備").execute().data)
+    main_options = sorted(set(df["主設備"].dropna().unique())) if "主設備" in df else []
+    sub_options = sorted(set(df["次設備"].dropna().unique())) if "次設備" in df else []
+    eq_options = sorted(set(df["設備"].dropna().unique())) if "設備" in df else []
+except Exception:
+    main_options, sub_options, eq_options = [], [], []
+
 st.markdown("---")
 st.subheader("✏️ 輸入新設備欄位")
 
 with st.form("new_form"):
+    # 主設備
+    main_sel = st.selectbox("主設備（下拉選）", main_options + [""], index=len(main_options))
+    main_custom = st.text_input("主設備（可自行輸入）", value=st.session_state.new_buffer.get("主設備", ""))
+    st.session_state.new_buffer["主設備"] = main_custom.strip() if main_custom.strip() else main_sel
+
+    # 次設備
+    sub_sel = st.selectbox("次設備（下拉選）", sub_options + [""], index=len(sub_options))
+    sub_custom = st.text_input("次設備（可自行輸入）", value=st.session_state.new_buffer.get("次設備", ""))
+    st.session_state.new_buffer["次設備"] = sub_custom.strip() if sub_custom.strip() else sub_sel
+
+    # 設備
+    eq_sel = st.selectbox("設備（下拉選）", eq_options + [""], index=len(eq_options))
+    eq_custom = st.text_input("設備（可自行輸入）", value=st.session_state.new_buffer.get("設備", ""))
+    st.session_state.new_buffer["設備"] = eq_custom.strip() if eq_custom.strip() else eq_sel
+
+    # 其他欄位
     for col in columns:
-        st.session_state.new_buffer[col] = st.text_input(f"{col}", value=st.session_state.new_buffer[col])
+        if col not in ["主設備", "次設備", "設備"]:
+            st.session_state.new_buffer[col] = st.text_input(f"{col}", value=st.session_state.new_buffer[col])
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         back = st.form_submit_button("🔙 上一步")
@@ -71,7 +96,6 @@ if compare:
             st.markdown(f"▫️ {col}：`（空白）`")
 
 def clean_buffer(buffer):
-    # 型態安全處理（空、數字、日期）
     for k, v in buffer.items():
         if str(v).strip() == "":
             buffer[k] = None
@@ -93,7 +117,6 @@ def clean_buffer(buffer):
 if save:
     try:
         new_data = clean_buffer(st.session_state.new_buffer.copy())
-        # 再次保險，不送id/created_at
         for drop_col in ["id", "created_at"]:
             if drop_col in new_data:
                 del new_data[drop_col]
