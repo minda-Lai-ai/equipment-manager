@@ -4,7 +4,7 @@ from supabase import create_client
 
 supabase = create_client(
     "https://todjfbmcaxecrqlkkvkd.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZGpmYm1jYXhlY3JxbGtrdmtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzMjk3NDgsImV4cCI6MjA3NjkwNTc0OH0.0uTJcrHwvnGM8YT1bPHzMyGkQHIJUZWXsVEwEPjp0sA"
+    "你的 supabase key"
 )
 
 if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
@@ -20,10 +20,10 @@ st.title("🆕 新增設備資料")
 if st.button("🔙 返回主控面板"):
     st.switch_page("main_dashboard.py")
 
-# 取得目前設備選項用於主設備/次設備下拉選單
-fetch = supabase.table("main_equipment_system").select("*").limit(1).execute()
-if fetch.data and len(fetch.data) > 0:
-    columns = list(fetch.data[0].keys())
+# 取表頭（避開id/created_at）
+result = supabase.table("main_equipment_system").select("*").limit(1).execute()
+if result.data and len(result.data) > 0:
+    columns = list(result.data[0].keys())
 else:
     columns = [
         "主設備", "次設備", "設備狀況", "維修提示", "設備", "設備編號", "設備請購維修編號",
@@ -32,37 +32,20 @@ else:
         "是否有備品", "請購履歷", "備品狀況", "備品位置", "備品數量", "表單修改人", "備註"
     ]
 
+# 強制去除id和created_at
+for drop_col in ["id", "created_at"]:
+    if drop_col in columns:
+        columns.remove(drop_col)
+
 if "new_buffer" not in st.session_state:
     st.session_state.new_buffer = {col: "" for col in columns}
 
 st.markdown("---")
 st.subheader("✏️ 輸入新設備欄位")
 
-main_list = [] # 可填主設備選項
-sub_list = []  # 可填次設備選項
-try:
-    # 如果有現有欄位資料可動態提供選項
-    demo = supabase.table("main_equipment_system").select("主設備,次設備").execute()
-    main_list = sorted({row["主設備"] for row in demo.data if row.get("主設備")}) if demo.data else []
-    sub_list = sorted({row["次設備"] for row in demo.data if row.get("次設備")}) if demo.data else []
-except Exception:
-    pass
-
 with st.form("new_form"):
-    # 主設備下拉選+可自訂
-    主設備_sel = st.selectbox("主設備（下拉選）", main_list + [""], index=len(main_list), key="主設備_sel")
-    主設備_custom = st.text_input("主設備（可自行輸入或修改）", value=st.session_state.new_buffer.get('主設備', ''))
-    st.session_state.new_buffer["主設備"] = 主設備_custom.strip() if 主設備_custom.strip() else 主設備_sel
-
-    # 次設備同理
-    次設備_sel = st.selectbox("次設備（下拉選）", sub_list + [""], index=len(sub_list), key="次設備_sel")
-    次設備_custom = st.text_input("次設備（可自行輸入或修改）", value=st.session_state.new_buffer.get('次設備', ''))
-    st.session_state.new_buffer["次設備"] = 次設備_custom.strip() if 次設備_custom.strip() else 次設備_sel
-    
-    # 其他欄位一律 text_input
     for col in columns:
-        if col not in ["主設備", "次設備"]:
-            st.session_state.new_buffer[col] = st.text_input(f"{col}", value=st.session_state.new_buffer[col])
+        st.session_state.new_buffer[col] = st.text_input(f"{col}", value=st.session_state.new_buffer[col])
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         back = st.form_submit_button("🔙 上一步")
@@ -103,7 +86,6 @@ def clean_buffer(buffer):
             except:
                 buffer[k] = None
         elif "是否有備品" == k:
-            # 可改成布林或標準字串
             val = str(v).strip()
             buffer[k] = True if val in ["1", "True", "true", "yes", "有"] else False if val in ["0", "False", "false", "no", "無"] else None
     return buffer
@@ -111,6 +93,10 @@ def clean_buffer(buffer):
 if save:
     try:
         new_data = clean_buffer(st.session_state.new_buffer.copy())
+        # 再次保險，不送id/created_at
+        for drop_col in ["id", "created_at"]:
+            if drop_col in new_data:
+                del new_data[drop_col]
         supabase.table("main_equipment_system").insert([new_data]).execute()
         st.success(f"✅ 已新增設備：{new_data.get('設備')}（{new_data.get('設備請購維修編號')}）")
         st.session_state.new_buffer = {col: "" for col in columns}
