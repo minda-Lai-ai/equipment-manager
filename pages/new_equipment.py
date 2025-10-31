@@ -63,7 +63,7 @@ with st.form("new_form"):
     #minda
     columns = list(result.data[0].keys())
         if "id" in columns:
-    columns.remove("id")
+            columns.remove("id")
     #minda
     for col in columns:
         if col not in ["主設備", "次設備"]:
