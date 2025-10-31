@@ -21,6 +21,39 @@ st.title("🆕 新增設備資料")
 if st.button("🔙 返回主控面板"):
     st.switch_page("main_dashboard.py")
 
+#MINDA
+def clean_buffer(buffer):
+    import re
+    for k, v in buffer.items():
+        # 空字串自動轉 None
+        if str(v).strip() == "":
+            buffer[k] = None
+        # 自動辨識日期
+        elif "日期" in k and v:
+            try:
+                buffer[k] = pd.to_datetime(v).strftime("%Y-%m-%d")
+            except:
+                buffer[k] = None
+        # 自動辨識數量、週期、數字
+        elif any(w in k for w in ["數量", "週期"]):
+            try:
+                buffer[k] = int(v)
+            except:
+                buffer[k] = None
+    return buffer
+
+if save:
+    new_data = clean_buffer(st.session_state.new_buffer.copy())
+    try:
+        supabase.table("main_equipment_system").insert([new_data]).execute()
+        st.success(f"✅ 已新增設備：{new_data.get('設備')}（{new_data.get('設備請購維修編號')}）")
+        st.session_state.new_buffer = {col: "" for col in columns}
+    except Exception as ex:
+        st.error(f"❌ 新增失敗，請檢查必填欄位、型態或RLS Policy。訊息：{ex}")
+        st.write(new_data)
+#MINDA
+
+
 # 直接從 Supabase 取欄位（取一筆即可抓表頭）
 result = supabase.table("main_equipment_system").select("*").limit(1).execute()
 if result.data and len(result.data) > 0:
