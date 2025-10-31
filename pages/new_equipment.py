@@ -60,11 +60,6 @@ with st.form("new_form"):
     st.session_state.new_buffer["次設備"] = 次設備_custom.strip() if 次設備_custom.strip() else 次設備_sel
     
     # 其他欄位一律 text_input
-    #minda
-    columns = list(result.data[0].keys())
-    if "id" in columns:
-        columns.remove("id")
-    #minda
     for col in columns:
         if col not in ["主設備", "次設備"]:
             st.session_state.new_buffer[col] = st.text_input(f"{col}", value=st.session_state.new_buffer[col])
