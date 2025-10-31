@@ -21,6 +21,19 @@ st.title("🆕 新增設備資料")
 if st.button("🔙 返回主控面板"):
     st.switch_page("main_dashboard.py")
 
+# 直接從 Supabase 取欄位（取一筆即可抓表頭）
+result = supabase.table("main_equipment_system").select("*").limit(1).execute()
+if result.data and len(result.data) > 0:
+    columns = list(result.data[0].keys())
+else:
+    # 如果資料庫空無內容，請確認資料表已建立所有所需欄位
+    columns = [
+        "主設備", "次設備", "設備狀況", "維修提示", "設備", "設備編號", "設備請購維修編號",
+        "設備類型", "設備規格", "設備廠商", "最近維修保養_日期", "下次維修保養_日期",
+        "維修保養週期_月", "設備負責人", "維修廠商", "廠內維修單位", "維修單位聯絡人_分機",
+        "是否有備品", "請購履歷", "備品狀況", "備品位置", "備品數量", "表單修改人", "備註"
+    ]
+
 #MINDA
 主設備_options = sorted(df["主設備"].dropna().unique().tolist())
 主設備_select = st.selectbox("主設備（下拉選）", 主設備_options, key="主設備_select")
@@ -35,19 +48,6 @@ if st.button("🔙 返回主控面板"):
 
 次設備 = 次設備_custom.strip() if 次設備_custom.strip() != "" else 次設備_select
 #MINDA
-
-# 直接從 Supabase 取欄位（取一筆即可抓表頭）
-result = supabase.table("main_equipment_system").select("*").limit(1).execute()
-if result.data and len(result.data) > 0:
-    columns = list(result.data[0].keys())
-else:
-    # 如果資料庫空無內容，請確認資料表已建立所有所需欄位
-    columns = [
-        "主設備", "次設備", "設備狀況", "維修提示", "設備", "設備編號", "設備請購維修編號",
-        "設備類型", "設備規格", "設備廠商", "最近維修保養_日期", "下次維修保養_日期",
-        "維修保養週期_月", "設備負責人", "維修廠商", "廠內維修單位", "維修單位聯絡人_分機",
-        "是否有備品", "請購履歷", "備品狀況", "備品位置", "備品數量", "表單修改人", "備註"
-    ]
 
 if "new_buffer" not in st.session_state:
     st.session_state.new_buffer = {col: "" for col in columns}
