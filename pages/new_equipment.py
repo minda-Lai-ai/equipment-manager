@@ -21,6 +21,21 @@ st.title("🆕 新增設備資料")
 if st.button("🔙 返回主控面板"):
     st.switch_page("main_dashboard.py")
 
+#MINDA
+主設備_options = sorted(df["主設備"].dropna().unique().tolist())
+主設備_select = st.selectbox("主設備（下拉選）", 主設備_options, key="主設備_select")
+主設備_custom = st.text_input("主設備（可自行輸入，如需修改）", value="", key="主設備_custom")
+
+主設備 = 主設備_custom.strip() if 主設備_custom.strip() != "" else 主設備_select
+
+# 次設備同理
+次設備_options = sorted(df["次設備"].dropna().unique().tolist())
+次設備_select = st.selectbox("次設備（下拉選）", 次設備_options, key="次設備_select")
+次設備_custom = st.text_input("次設備（可自行輸入，如需修改）", value="", key="次設備_custom")
+
+次設備 = 次設備_custom.strip() if 次設備_custom.strip() != "" else 次設備_select
+#MINDA
+
 # 直接從 Supabase 取欄位（取一筆即可抓表頭）
 result = supabase.table("main_equipment_system").select("*").limit(1).execute()
 if result.data and len(result.data) > 0:
