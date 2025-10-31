@@ -108,14 +108,6 @@ def clean_buffer(buffer):
             buffer[k] = True if val in ["1", "True", "true", "yes", "有"] else False if val in ["0", "False", "false", "no", "無"] else None
     return buffer
 
-#minda
-    insert_data = st.session_state.new_buffer.copy()
-    if "id" in insert_data:
-        del insert_data["id"]
-    supabase.table("main_equipment_system").insert([insert_data]).execute()
-
-#minda
-
 if save:
     try:
         new_data = clean_buffer(st.session_state.new_buffer.copy())
